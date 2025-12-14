@@ -1,37 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, Plus, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
-import { useJournalStore } from '@/stores/journalStore';
+import { getMoodLogs, createMoodLog } from '@/lib/api';
 import { EMOTIONS, Emotion } from '@/types/journal';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { Database } from '@/integrations/supabase/types';
 
-const mockMoodHistory = [
-  { id: '1', date: new Date(Date.now() - 1000 * 60 * 60 * 2), emotion: 'confident' as Emotion, intensity: 4, notes: 'Feeling good after morning analysis' },
-  { id: '2', date: new Date(Date.now() - 1000 * 60 * 60 * 5), emotion: 'anxious' as Emotion, intensity: 3, notes: 'Market volatility increasing' },
-  { id: '3', date: new Date(Date.now() - 1000 * 60 * 60 * 24), emotion: 'calm' as Emotion, intensity: 4, notes: 'Relaxed weekend trading prep' },
-  { id: '4', date: new Date(Date.now() - 1000 * 60 * 60 * 26), emotion: 'focused' as Emotion, intensity: 5, notes: 'Deep work session on strategy' },
-  { id: '5', date: new Date(Date.now() - 1000 * 60 * 60 * 48), emotion: 'stressed' as Emotion, intensity: 4, notes: 'Multiple positions open' },
-];
+type MoodLogRow = Database['public']['Tables']['mood_logs']['Row'];
+type EmotionType = Database['public']['Enums']['emotion_type'];
 
 export default function MoodLog() {
   const [selectedEmotion, setSelectedEmotion] = useState<Emotion | null>(null);
   const [intensity, setIntensity] = useState([3]);
   const [notes, setNotes] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [moodLogs, setMoodLogs] = useState<MoodLogRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { addMoodLog, moodLogs } = useJournalStore();
   const { toast } = useToast();
 
-  const allMoodLogs = [...moodLogs, ...mockMoodHistory].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  useEffect(() => {
+    loadMoodLogs();
+  }, []);
 
-  const handleSubmit = () => {
+  const loadMoodLogs = async () => {
+    const { data, error } = await getMoodLogs();
+    if (!error && data) {
+      setMoodLogs(data);
+    }
+    setLoading(false);
+  };
+
+  const handleSubmit = async () => {
     if (!selectedEmotion) {
       toast({
         title: 'Please select an emotion',
@@ -40,25 +46,49 @@ export default function MoodLog() {
       return;
     }
 
-    addMoodLog({
-      date: new Date(),
-      emotion: selectedEmotion,
+    setIsSubmitting(true);
+
+    const { data, error } = await createMoodLog({
+      log_date: new Date().toISOString(),
+      emotion: selectedEmotion as EmotionType,
       intensity: intensity[0],
-      notes: notes || undefined,
+      notes: notes || null,
     });
 
-    toast({
-      title: 'Mood logged!',
-      description: 'Your current mood has been recorded.',
-    });
+    if (error) {
+      toast({
+        title: 'Failed to log mood',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Mood logged!',
+        description: 'Your current mood has been recorded.',
+      });
 
-    setSelectedEmotion(null);
-    setIntensity([3]);
-    setNotes('');
-    setShowForm(false);
+      if (data) {
+        setMoodLogs([data, ...moodLogs]);
+      }
+
+      setSelectedEmotion(null);
+      setIntensity([3]);
+      setNotes('');
+      setShowForm(false);
+    }
+
+    setIsSubmitting(false);
   };
 
-  const getEmotionData = (emotion: Emotion) => EMOTIONS.find((e) => e.value === emotion);
+  const getEmotionData = (emotion: string) => EMOTIONS.find((e) => e.value === emotion);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -147,8 +177,8 @@ export default function MoodLog() {
                 <Button variant="outline" onClick={() => setShowForm(false)}>
                   Cancel
                 </Button>
-                <Button variant="gold" onClick={handleSubmit}>
-                  Save Mood
+                <Button variant="gold" onClick={handleSubmit} disabled={isSubmitting}>
+                  {isSubmitting ? 'Saving...' : 'Save Mood'}
                 </Button>
               </div>
             </CardContent>
@@ -165,55 +195,62 @@ export default function MoodLog() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {allMoodLogs.map((log, index) => {
-              const emotionData = getEmotionData(log.emotion);
-              return (
-                <motion.div
-                  key={log.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="flex items-start gap-4 p-4 rounded-lg bg-muted/30 border border-border/50 hover:border-border transition-colors"
-                >
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-                    style={{ backgroundColor: `${emotionData?.color}20` }}
+          {moodLogs.length === 0 ? (
+            <div className="text-center py-8">
+              <Heart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No mood logs yet. Start tracking your emotions!</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {moodLogs.map((log, index) => {
+                const emotionData = getEmotionData(log.emotion);
+                return (
+                  <motion.div
+                    key={log.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="flex items-start gap-4 p-4 rounded-lg bg-muted/30 border border-border/50 hover:border-border transition-colors"
                   >
-                    {emotionData?.emoji}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-4">
-                      <h4 className="font-medium text-foreground">{emotionData?.label}</h4>
-                      <span className="text-xs text-muted-foreground flex-shrink-0">
-                        {format(new Date(log.date), 'MMM d, h:mm a')}
-                      </span>
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                      style={{ backgroundColor: `${emotionData?.color}20` }}
+                    >
+                      {emotionData?.emoji}
                     </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-muted-foreground">Intensity:</span>
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5].map((level) => (
-                          <div
-                            key={level}
-                            className="w-2 h-2 rounded-full"
-                            style={{
-                              backgroundColor:
-                                level <= log.intensity
-                                  ? emotionData?.color
-                                  : 'hsl(217, 33%, 20%)',
-                            }}
-                          />
-                        ))}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-4">
+                        <h4 className="font-medium text-foreground">{emotionData?.label}</h4>
+                        <span className="text-xs text-muted-foreground flex-shrink-0">
+                          {format(new Date(log.log_date), 'MMM d, h:mm a')}
+                        </span>
                       </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-muted-foreground">Intensity:</span>
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((level) => (
+                            <div
+                              key={level}
+                              className="w-2 h-2 rounded-full"
+                              style={{
+                                backgroundColor:
+                                  level <= log.intensity
+                                    ? emotionData?.color
+                                    : 'hsl(217, 33%, 20%)',
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      {log.notes && (
+                        <p className="text-sm text-muted-foreground mt-2">{log.notes}</p>
+                      )}
                     </div>
-                    {log.notes && (
-                      <p className="text-sm text-muted-foreground mt-2">{log.notes}</p>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </motion.div>

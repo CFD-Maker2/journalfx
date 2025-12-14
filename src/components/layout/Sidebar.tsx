@@ -15,7 +15,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useJournalStore } from '@/stores/journalStore';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
 const menuItems = [
@@ -31,7 +31,14 @@ const menuItems = [
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-  const { logout, user } = useJournalStore();
+  const { signOut, profile, user } = useAuthContext();
+
+  const handleLogout = async () => {
+    await signOut();
+  };
+
+  const displayName = profile?.name || user?.email?.split('@')[0] || 'Trader';
+  const displayEmail = profile?.email || user?.email || '';
 
   return (
     <motion.aside
@@ -88,13 +95,13 @@ export function Sidebar() {
 
       {/* User Section */}
       <div className="p-3 border-t border-sidebar-border">
-        {!collapsed && user && (
+        {!collapsed && (
           <div className="mb-3 px-3 py-2">
             <p className="text-sm font-medium text-foreground truncate">
-              {user.name}
+              {displayName}
             </p>
             <p className="text-xs text-muted-foreground truncate">
-              {user.email}
+              {displayEmail}
             </p>
           </div>
         )}
@@ -104,7 +111,7 @@ export function Sidebar() {
             'w-full justify-start gap-3 text-muted-foreground hover:text-destructive',
             collapsed && 'justify-center px-0'
           )}
-          onClick={logout}
+          onClick={handleLogout}
         >
           <LogOut className="w-5 h-5" />
           {!collapsed && <span>Logout</span>}

@@ -14,7 +14,162 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      journal_entries: {
+        Row: {
+          ai_insight: string | null
+          confidence_level: number
+          created_at: string
+          during_trade: string | null
+          emotion: Database["public"]["Enums"]["emotion_type"]
+          emotion_intensity: number
+          entry_date: string
+          id: string
+          market_condition:
+            | Database["public"]["Enums"]["market_condition"]
+            | null
+          outcome: Database["public"]["Enums"]["trade_outcome"] | null
+          post_trade: string | null
+          pre_trade: string | null
+          profit_loss: number | null
+          reflection_prompt: string | null
+          tags: string[] | null
+          trade_type: Database["public"]["Enums"]["trade_type"] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_insight?: string | null
+          confidence_level?: number
+          created_at?: string
+          during_trade?: string | null
+          emotion?: Database["public"]["Enums"]["emotion_type"]
+          emotion_intensity?: number
+          entry_date?: string
+          id?: string
+          market_condition?:
+            | Database["public"]["Enums"]["market_condition"]
+            | null
+          outcome?: Database["public"]["Enums"]["trade_outcome"] | null
+          post_trade?: string | null
+          pre_trade?: string | null
+          profit_loss?: number | null
+          reflection_prompt?: string | null
+          tags?: string[] | null
+          trade_type?: Database["public"]["Enums"]["trade_type"] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_insight?: string | null
+          confidence_level?: number
+          created_at?: string
+          during_trade?: string | null
+          emotion?: Database["public"]["Enums"]["emotion_type"]
+          emotion_intensity?: number
+          entry_date?: string
+          id?: string
+          market_condition?:
+            | Database["public"]["Enums"]["market_condition"]
+            | null
+          outcome?: Database["public"]["Enums"]["trade_outcome"] | null
+          post_trade?: string | null
+          pre_trade?: string | null
+          profit_loss?: number | null
+          reflection_prompt?: string | null
+          tags?: string[] | null
+          trade_type?: Database["public"]["Enums"]["trade_type"] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mood_logs: {
+        Row: {
+          created_at: string
+          emotion: Database["public"]["Enums"]["emotion_type"]
+          id: string
+          intensity: number
+          log_date: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emotion: Database["public"]["Enums"]["emotion_type"]
+          id?: string
+          intensity?: number
+          log_date?: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emotion?: Database["public"]["Enums"]["emotion_type"]
+          id?: string
+          intensity?: number
+          log_date?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          id: string
+          name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reflection_responses: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          prompt_id: string
+          prompt_text: string
+          response: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          prompt_id: string
+          prompt_text: string
+          response: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          prompt_id?: string
+          prompt_text?: string
+          response?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +178,19 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      emotion_type:
+        | "confident"
+        | "anxious"
+        | "calm"
+        | "stressed"
+        | "excited"
+        | "fearful"
+        | "focused"
+        | "frustrated"
+        | "neutral"
+      market_condition: "trending" | "ranging" | "volatile" | "calm"
+      trade_outcome: "profit" | "loss" | "breakeven"
+      trade_type: "long" | "short" | "scalp" | "swing" | "day"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +317,21 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      emotion_type: [
+        "confident",
+        "anxious",
+        "calm",
+        "stressed",
+        "excited",
+        "fearful",
+        "focused",
+        "frustrated",
+        "neutral",
+      ],
+      market_condition: ["trending", "ranging", "volatile", "calm"],
+      trade_outcome: ["profit", "loss", "breakeven"],
+      trade_type: ["long", "short", "scalp", "swing", "day"],
+    },
   },
 } as const
