@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Filter, Calendar, BookOpen, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -12,78 +11,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useJournalStore } from '@/stores/journalStore';
-import { EMOTIONS, JournalEntry, Emotion } from '@/types/journal';
+import { getJournalEntries } from '@/lib/api';
+import { EMOTIONS, Emotion } from '@/types/journal';
 import { format } from 'date-fns';
+import { Database } from '@/integrations/supabase/types';
 
-const mockEntries: JournalEntry[] = [
-  {
-    id: '1',
-    date: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    emotion: 'confident',
-    emotionIntensity: 4,
-    confidenceLevel: 5,
-    tradeType: 'swing',
-    marketCondition: 'trending',
-    preTrade: 'Clear setup on EURUSD, confluence with daily support.',
-    duringTrade: 'Stayed patient, followed the plan.',
-    postTrade: 'Great execution, happy with the discipline shown.',
-    tags: ['EURUSD', 'Discipline', 'Trend'],
-    outcome: 'profit',
-    profitLoss: 245,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
-  },
-  {
-    id: '2',
-    date: new Date(Date.now() - 1000 * 60 * 60 * 48),
-    emotion: 'anxious',
-    emotionIntensity: 3,
-    confidenceLevel: 2,
-    tradeType: 'day',
-    marketCondition: 'volatile',
-    preTrade: 'News event coming up, unsure about direction.',
-    duringTrade: 'Felt FOMO, almost revenge traded.',
-    postTrade: 'Should have stayed out of the market.',
-    tags: ['GBPUSD', 'FOMO', 'News'],
-    outcome: 'loss',
-    profitLoss: -120,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48),
-  },
-  {
-    id: '3',
-    date: new Date(Date.now() - 1000 * 60 * 60 * 72),
-    emotion: 'calm',
-    emotionIntensity: 4,
-    confidenceLevel: 4,
-    tradeType: 'scalp',
-    marketCondition: 'ranging',
-    preTrade: 'Market in consolidation, looking for range trades.',
-    duringTrade: 'Multiple small wins, staying focused.',
-    postTrade: 'Consistent execution of the strategy.',
-    tags: ['USDJPY', 'Range', 'Scalping'],
-    outcome: 'profit',
-    profitLoss: 85,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 72),
-  },
-];
+type JournalEntryRow = Database['public']['Tables']['journal_entries']['Row'];
 
 export default function Timeline() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [emotionFilter, setEmotionFilter] = useState<Emotion | 'all'>('all');
-  const [outcomeFilter, setOutcomeFilter] = useState<'all' | 'profit' | 'loss' | 'breakeven'>('all');
+  const [emotionFilter, setEmotionFilter] = useState<string>('all');
+  const [outcomeFilter, setOutcomeFilter] = useState<string>('all');
+  const [entries, setEntries] = useState<JournalEntryRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { entries } = useJournalStore();
-  const allEntries = [...entries, ...mockEntries].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  useEffect(() => {
+    loadEntries();
+  }, []);
 
-  const filteredEntries = allEntries.filter((entry) => {
+  const loadEntries = async () => {
+    const { data, error } = await getJournalEntries();
+    if (!error && data) {
+      setEntries(data);
+    }
+    setLoading(false);
+  };
+
+  const filteredEntries = entries.filter((entry) => {
     const matchesSearch =
       searchQuery === '' ||
-      entry.preTrade.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entry.duringTrade.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entry.postTrade.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entry.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      entry.pre_trade?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entry.during_trade?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entry.post_trade?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entry.tags?.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesEmotion = emotionFilter === 'all' || entry.emotion === emotionFilter;
     const matchesOutcome = outcomeFilter === 'all' || entry.outcome === outcomeFilter;
@@ -91,9 +51,9 @@ export default function Timeline() {
     return matchesSearch && matchesEmotion && matchesOutcome;
   });
 
-  const getEmotionData = (emotion: Emotion) => EMOTIONS.find((e) => e.value === emotion);
+  const getEmotionData = (emotion: string) => EMOTIONS.find((e) => e.value === emotion);
 
-  const getOutcomeIcon = (outcome?: 'profit' | 'loss' | 'breakeven') => {
+  const getOutcomeIcon = (outcome?: string | null) => {
     switch (outcome) {
       case 'profit':
         return <TrendingUp className="w-4 h-4 text-success" />;
@@ -105,6 +65,14 @@ export default function Timeline() {
         return null;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -135,7 +103,7 @@ export default function Timeline() {
               />
             </div>
             <div className="flex gap-3">
-              <Select value={emotionFilter} onValueChange={(v) => setEmotionFilter(v as Emotion | 'all')}>
+              <Select value={emotionFilter} onValueChange={setEmotionFilter}>
                 <SelectTrigger className="w-36 bg-muted border-border">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Emotion" />
@@ -150,7 +118,7 @@ export default function Timeline() {
                 </SelectContent>
               </Select>
 
-              <Select value={outcomeFilter} onValueChange={(v) => setOutcomeFilter(v as typeof outcomeFilter)}>
+              <Select value={outcomeFilter} onValueChange={setOutcomeFilter}>
                 <SelectTrigger className="w-36 bg-muted border-border">
                   <SelectValue placeholder="Outcome" />
                 </SelectTrigger>
@@ -215,24 +183,24 @@ export default function Timeline() {
                             <CardTitle className="text-lg font-serif">{emotionData?.label}</CardTitle>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Calendar className="w-4 h-4" />
-                              {format(new Date(entry.date), 'MMMM d, yyyy • h:mm a')}
+                              {format(new Date(entry.entry_date), 'MMMM d, yyyy • h:mm a')}
                             </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           {getOutcomeIcon(entry.outcome)}
-                          {entry.profitLoss !== undefined && (
+                          {entry.profit_loss !== null && (
                             <span
                               className={`text-sm font-medium ${
-                                entry.profitLoss > 0
+                                Number(entry.profit_loss) > 0
                                   ? 'text-success'
-                                  : entry.profitLoss < 0
+                                  : Number(entry.profit_loss) < 0
                                   ? 'text-destructive'
                                   : 'text-muted-foreground'
                               }`}
                             >
-                              {entry.profitLoss > 0 ? '+' : ''}
-                              ${entry.profitLoss}
+                              {Number(entry.profit_loss) > 0 ? '+' : ''}
+                              ${entry.profit_loss}
                             </span>
                           )}
                         </div>
@@ -241,17 +209,17 @@ export default function Timeline() {
                     <CardContent className="space-y-4">
                       {/* Trade Info */}
                       <div className="flex flex-wrap gap-2">
-                        {entry.tradeType && (
+                        {entry.trade_type && (
                           <Badge variant="outline" className="capitalize">
-                            {entry.tradeType}
+                            {entry.trade_type}
                           </Badge>
                         )}
-                        {entry.marketCondition && (
+                        {entry.market_condition && (
                           <Badge variant="outline" className="capitalize">
-                            {entry.marketCondition}
+                            {entry.market_condition}
                           </Badge>
                         )}
-                        {entry.tags.map((tag) => (
+                        {entry.tags?.map((tag) => (
                           <Badge key={tag} variant="secondary">
                             {tag}
                           </Badge>
@@ -260,22 +228,22 @@ export default function Timeline() {
 
                       {/* Reflections */}
                       <div className="grid gap-3">
-                        {entry.preTrade && (
+                        {entry.pre_trade && (
                           <div className="p-3 rounded-lg bg-muted/30">
                             <p className="text-xs text-muted-foreground mb-1">Before Trade</p>
-                            <p className="text-sm text-foreground">{entry.preTrade}</p>
+                            <p className="text-sm text-foreground">{entry.pre_trade}</p>
                           </div>
                         )}
-                        {entry.duringTrade && (
+                        {entry.during_trade && (
                           <div className="p-3 rounded-lg bg-muted/30">
                             <p className="text-xs text-muted-foreground mb-1">During Trade</p>
-                            <p className="text-sm text-foreground">{entry.duringTrade}</p>
+                            <p className="text-sm text-foreground">{entry.during_trade}</p>
                           </div>
                         )}
-                        {entry.postTrade && (
+                        {entry.post_trade && (
                           <div className="p-3 rounded-lg bg-muted/30">
                             <p className="text-xs text-muted-foreground mb-1">After Trade</p>
-                            <p className="text-sm text-foreground">{entry.postTrade}</p>
+                            <p className="text-sm text-foreground">{entry.post_trade}</p>
                           </div>
                         )}
                       </div>
@@ -289,7 +257,7 @@ export default function Timeline() {
                               <div
                                 key={level}
                                 className={`w-2 h-2 rounded-full ${
-                                  level <= entry.confidenceLevel ? 'bg-primary' : 'bg-border'
+                                  level <= entry.confidence_level ? 'bg-primary' : 'bg-border'
                                 }`}
                               />
                             ))}
@@ -304,7 +272,7 @@ export default function Timeline() {
                                 className="w-2 h-2 rounded-full"
                                 style={{
                                   backgroundColor:
-                                    level <= entry.emotionIntensity
+                                    level <= entry.emotion_intensity
                                       ? emotionData?.color
                                       : 'hsl(217, 33%, 20%)',
                                 }}

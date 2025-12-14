@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   BookOpen,
@@ -10,7 +11,8 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useJournalStore } from '@/stores/journalStore';
+import { useAuthContext } from '@/contexts/AuthContext';
+import { getJournalEntries, getMoodLogs, getJournalStats } from '@/lib/api';
 import { EMOTIONS } from '@/types/journal';
 import { Link } from 'react-router-dom';
 import {
@@ -24,24 +26,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-
-const mockMoodData = [
-  { day: 'Mon', confidence: 4, stress: 2 },
-  { day: 'Tue', confidence: 3, stress: 3 },
-  { day: 'Wed', confidence: 5, stress: 1 },
-  { day: 'Thu', confidence: 4, stress: 2 },
-  { day: 'Fri', confidence: 3, stress: 4 },
-  { day: 'Sat', confidence: 4, stress: 2 },
-  { day: 'Sun', confidence: 5, stress: 1 },
-];
-
-const mockEmotionData = [
-  { name: 'Confident', value: 35, color: 'hsl(142, 76%, 36%)' },
-  { name: 'Calm', value: 25, color: 'hsl(199, 89%, 48%)' },
-  { name: 'Anxious', value: 20, color: 'hsl(38, 92%, 50%)' },
-  { name: 'Focused', value: 15, color: 'hsl(43, 74%, 52%)' },
-  { name: 'Stressed', value: 5, color: 'hsl(0, 72%, 51%)' },
-];
+import { format, subDays } from 'date-fns';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -59,36 +44,113 @@ const itemVariants = {
 };
 
 export default function Dashboard() {
-  const { user, entries } = useJournalStore();
+  const { profile, user } = useAuthContext();
+  const [stats, setStats] = useState({
+    totalEntries: 0,
+    avgConfidence: '0',
+    winRate: '0',
+    totalReflections: 0,
+  });
+  const [moodData, setMoodData] = useState<{ day: string; confidence: number; stress: number }[]>([]);
+  const [emotionData, setEmotionData] = useState<{ name: string; value: number; color: string }[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const stats = [
+  useEffect(() => {
+    async function loadData() {
+      const [statsResult, entriesResult, moodLogsResult] = await Promise.all([
+        getJournalStats(),
+        getJournalEntries(),
+        getMoodLogs(),
+      ]);
+
+      setStats({
+        totalEntries: statsResult.totalEntries,
+        avgConfidence: statsResult.avgConfidence,
+        winRate: statsResult.winRate,
+        totalReflections: statsResult.totalReflections,
+      });
+
+      // Calculate mood trend for last 7 days
+      const last7Days = Array.from({ length: 7 }, (_, i) => {
+        const date = subDays(new Date(), 6 - i);
+        return {
+          day: format(date, 'EEE'),
+          date: format(date, 'yyyy-MM-dd'),
+          confidence: 3,
+          stress: 2,
+        };
+      });
+
+      if (entriesResult.data) {
+        entriesResult.data.forEach((entry) => {
+          const entryDate = format(new Date(entry.entry_date), 'yyyy-MM-dd');
+          const dayData = last7Days.find((d) => d.date === entryDate);
+          if (dayData) {
+            dayData.confidence = entry.confidence_level;
+            const stressEmotions = ['stressed', 'anxious', 'frustrated', 'fearful'];
+            dayData.stress = stressEmotions.includes(entry.emotion) ? entry.emotion_intensity : 1;
+          }
+        });
+      }
+
+      setMoodData(last7Days.map(({ day, confidence, stress }) => ({ day, confidence, stress })));
+
+      // Calculate emotion distribution
+      const emotionCounts: Record<string, number> = {};
+      if (entriesResult.data) {
+        entriesResult.data.forEach((entry) => {
+          emotionCounts[entry.emotion] = (emotionCounts[entry.emotion] || 0) + 1;
+        });
+      }
+
+      const emotionDistribution = EMOTIONS.map((e) => ({
+        name: e.label,
+        value: emotionCounts[e.value] || 0,
+        color: e.color,
+      })).filter((e) => e.value > 0);
+
+      setEmotionData(
+        emotionDistribution.length > 0
+          ? emotionDistribution
+          : [{ name: 'No data', value: 1, color: 'hsl(217, 33%, 45%)' }]
+      );
+
+      setLoading(false);
+    }
+
+    loadData();
+  }, []);
+
+  const displayName = profile?.name || user?.email?.split('@')[0] || 'Trader';
+
+  const statCards = [
     {
       label: 'Total Entries',
-      value: entries.length || 12,
+      value: stats.totalEntries,
       icon: BookOpen,
-      change: '+3 this week',
+      change: 'Keep journaling!',
       positive: true,
     },
     {
       label: 'Avg Confidence',
-      value: '4.2',
+      value: stats.avgConfidence,
       icon: TrendingUp,
-      change: '+0.5 vs last week',
-      positive: true,
+      change: 'Out of 5',
+      positive: parseFloat(stats.avgConfidence) >= 3,
     },
     {
-      label: 'Mood Score',
-      value: '78%',
+      label: 'Win Rate',
+      value: `${stats.winRate}%`,
       icon: Heart,
-      change: 'Positive trend',
-      positive: true,
+      change: 'Based on outcomes',
+      positive: parseFloat(stats.winRate) >= 50,
     },
     {
       label: 'Reflections',
-      value: '8',
+      value: stats.totalReflections,
       icon: Brain,
-      change: '2 pending',
-      positive: false,
+      change: 'Completed',
+      positive: true,
     },
   ];
 
@@ -97,6 +159,14 @@ export default function Dashboard() {
     'How did you handle stress during volatility?',
     'What would you do differently next time?',
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -109,7 +179,7 @@ export default function Dashboard() {
       <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-serif font-bold text-foreground">
-            Welcome back, <span className="text-gradient-gold">{user?.name || 'Trader'}</span>
+            Welcome back, <span className="text-gradient-gold">{displayName}</span>
           </h1>
           <p className="text-muted-foreground mt-1">
             Here's your psychological overview for today
@@ -125,7 +195,7 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
+        {statCards.map((stat, index) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 20 }}
@@ -170,7 +240,7 @@ export default function Dashboard() {
             <CardContent>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={mockMoodData}>
+                  <AreaChart data={moodData}>
                     <defs>
                       <linearGradient id="colorConfidence" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="hsl(43, 74%, 52%)" stopOpacity={0.3} />
@@ -246,7 +316,7 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={mockEmotionData}
+                      data={emotionData}
                       cx="50%"
                       cy="50%"
                       innerRadius={50}
@@ -254,7 +324,7 @@ export default function Dashboard() {
                       paddingAngle={2}
                       dataKey="value"
                     >
-                      {mockEmotionData.map((entry, index) => (
+                      {emotionData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -269,7 +339,7 @@ export default function Dashboard() {
                 </ResponsiveContainer>
               </div>
               <div className="flex flex-wrap justify-center gap-3 mt-4">
-                {mockEmotionData.slice(0, 3).map((emotion) => (
+                {emotionData.slice(0, 3).map((emotion) => (
                   <div key={emotion.name} className="flex items-center gap-1.5">
                     <div
                       className="w-2 h-2 rounded-full"
@@ -338,10 +408,10 @@ export default function Dashboard() {
               <div className="mt-6 p-4 rounded-lg bg-primary/10 border border-primary/20">
                 <div className="flex items-center gap-2 mb-2">
                   <Calendar className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium text-foreground">Streak: 7 days</span>
+                  <span className="text-sm font-medium text-foreground">Keep it up!</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  You've been consistently journaling. Keep it up!
+                  Regular journaling builds self-awareness and discipline.
                 </p>
               </div>
             </CardContent>

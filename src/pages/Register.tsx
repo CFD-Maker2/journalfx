@@ -1,12 +1,19 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { TrendingUp, Mail, Lock, User, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useJournalStore } from '@/stores/journalStore';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+
+const registerSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -15,38 +22,68 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; confirmPassword?: string }>({});
   const navigate = useNavigate();
-  const { register } = useJournalStore();
+  const { signUp, isAuthenticated, loading } = useAuthContext();
   const { toast } = useToast();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setErrors({});
+
     if (password !== confirmPassword) {
-      toast({
-        title: 'Passwords do not match',
-        description: 'Please make sure your passwords match.',
-        variant: 'destructive',
+      setErrors({ confirmPassword: 'Passwords do not match' });
+      return;
+    }
+
+    const result = registerSchema.safeParse({ name, email, password });
+    if (!result.success) {
+      const fieldErrors: typeof errors = {};
+      result.error.errors.forEach((err) => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as keyof typeof errors] = err.message;
+        }
       });
+      setErrors(fieldErrors);
       return;
     }
 
     setIsLoading(true);
 
-    const success = await register(email, password, name);
+    const { error } = await signUp(email, password, name);
     
-    if (success) {
+    if (error) {
+      if (error.message.includes('already registered')) {
+        toast({
+          title: 'Account exists',
+          description: 'An account with this email already exists. Please sign in instead.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Registration failed',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+    } else {
       toast({
         title: 'Account created!',
         description: 'Welcome to your trading psychology journal.',
       });
       navigate('/dashboard');
-    } else {
-      toast({
-        title: 'Registration failed',
-        description: 'Please try again.',
-        variant: 'destructive',
-      });
     }
     
     setIsLoading(false);
@@ -97,7 +134,6 @@ export default function Register() {
           </motion.div>
         </div>
 
-        {/* Decorative elements */}
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
         <div className="absolute top-20 right-20 w-64 h-64 bg-accent/5 rounded-full blur-3xl"></div>
       </div>
@@ -143,6 +179,7 @@ export default function Register() {
                   required
                 />
               </div>
+              {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
             </div>
 
             <div className="space-y-2">
@@ -159,6 +196,7 @@ export default function Register() {
                   required
                 />
               </div>
+              {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
             </div>
 
             <div className="space-y-2">
@@ -183,6 +221,7 @@ export default function Register() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
             </div>
 
             <div className="space-y-2">
@@ -200,6 +239,7 @@ export default function Register() {
                   minLength={6}
                 />
               </div>
+              {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
             </div>
 
             <Button

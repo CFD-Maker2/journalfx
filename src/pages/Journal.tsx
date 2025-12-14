@@ -14,10 +14,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useJournalStore } from '@/stores/journalStore';
+import { createJournalEntry } from '@/lib/api';
 import { EMOTIONS, Emotion, TradeType, MarketCondition } from '@/types/journal';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { Database } from '@/integrations/supabase/types';
+
+type EmotionType = Database['public']['Enums']['emotion_type'];
+type TradeTypeEnum = Database['public']['Enums']['trade_type'];
+type MarketConditionEnum = Database['public']['Enums']['market_condition'];
+type TradeOutcome = Database['public']['Enums']['trade_outcome'];
 
 const tradeTypes: { value: TradeType; label: string }[] = [
   { value: 'long', label: 'Long Position' },
@@ -47,8 +53,8 @@ export default function Journal() {
   const [tags, setTags] = useState<string[]>([]);
   const [outcome, setOutcome] = useState<'profit' | 'loss' | 'breakeven' | ''>('');
   const [profitLoss, setProfitLoss] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { addEntry } = useJournalStore();
   const { toast } = useToast();
 
   const handleAddTag = (e: React.KeyboardEvent) => {
@@ -65,7 +71,7 @@ export default function Journal() {
     setTags(tags.filter((tag) => tag !== tagToRemove));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!preTrade && !duringTrade && !postTrade) {
@@ -77,41 +83,51 @@ export default function Journal() {
       return;
     }
 
-    addEntry({
-      date: new Date(),
-      emotion,
-      emotionIntensity: emotionIntensity[0],
-      confidenceLevel: confidenceLevel[0],
-      tradeType: tradeType || undefined,
-      marketCondition: marketCondition || undefined,
-      preTrade,
-      duringTrade,
-      postTrade,
+    setIsSubmitting(true);
+
+    const { data, error } = await createJournalEntry({
+      entry_date: new Date().toISOString(),
+      emotion: emotion as EmotionType,
+      emotion_intensity: emotionIntensity[0],
+      confidence_level: confidenceLevel[0],
+      trade_type: (tradeType || null) as TradeTypeEnum | null,
+      market_condition: (marketCondition || null) as MarketConditionEnum | null,
+      pre_trade: preTrade || null,
+      during_trade: duringTrade || null,
+      post_trade: postTrade || null,
       tags,
-      outcome: outcome || undefined,
-      profitLoss: profitLoss ? parseFloat(profitLoss) : undefined,
+      outcome: (outcome || null) as TradeOutcome | null,
+      profit_loss: profitLoss ? parseFloat(profitLoss) : null,
     });
 
-    toast({
-      title: 'Entry saved!',
-      description: 'Your journal entry has been recorded.',
-    });
+    if (error) {
+      toast({
+        title: 'Failed to save entry',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Entry saved!',
+        description: 'Your journal entry has been recorded.',
+      });
 
-    // Reset form
-    setEmotion('neutral');
-    setEmotionIntensity([3]);
-    setConfidenceLevel([3]);
-    setTradeType('');
-    setMarketCondition('');
-    setPreTrade('');
-    setDuringTrade('');
-    setPostTrade('');
-    setTags([]);
-    setOutcome('');
-    setProfitLoss('');
+      // Reset form
+      setEmotion('neutral');
+      setEmotionIntensity([3]);
+      setConfidenceLevel([3]);
+      setTradeType('');
+      setMarketCondition('');
+      setPreTrade('');
+      setDuringTrade('');
+      setPostTrade('');
+      setTags([]);
+      setOutcome('');
+      setProfitLoss('');
+    }
+
+    setIsSubmitting(false);
   };
-
-  const selectedEmotionData = EMOTIONS.find((e) => e.value === emotion);
 
   return (
     <motion.div
@@ -345,12 +361,9 @@ export default function Journal() {
 
         {/* Submit */}
         <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline" size="lg">
-            Save as Draft
-          </Button>
-          <Button type="submit" variant="gold" size="lg">
+          <Button type="submit" variant="gold" size="lg" disabled={isSubmitting}>
             <Save className="w-5 h-5" />
-            Save Entry
+            {isSubmitting ? 'Saving...' : 'Save Entry'}
           </Button>
         </div>
       </form>

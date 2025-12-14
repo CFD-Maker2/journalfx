@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { User, Mail, Calendar, Edit, Save, TrendingUp, BookOpen, Heart, Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,55 +6,99 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useJournalStore } from '@/stores/journalStore';
+import { useAuthContext } from '@/contexts/AuthContext';
+import { getJournalStats } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
 export default function Profile() {
-  const { user, entries, moodLogs } = useJournalStore();
+  const { user, profile, updateProfile } = useAuthContext();
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(user?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
+  const [name, setName] = useState(profile?.name || '');
+  const [stats, setStats] = useState({
+    totalEntries: 0,
+    totalMoodLogs: 0,
+    totalReflections: 0,
+  });
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const stats = [
+  useEffect(() => {
+    setName(profile?.name || '');
+  }, [profile]);
+
+  useEffect(() => {
+    async function loadStats() {
+      const result = await getJournalStats();
+      setStats({
+        totalEntries: result.totalEntries,
+        totalMoodLogs: result.totalMoodLogs,
+        totalReflections: result.totalReflections,
+      });
+      setLoading(false);
+    }
+    loadStats();
+  }, []);
+
+  const statCards = [
     {
       label: 'Journal Entries',
-      value: entries.length || 24,
+      value: stats.totalEntries,
       icon: BookOpen,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
     },
     {
       label: 'Mood Logs',
-      value: moodLogs.length || 48,
+      value: stats.totalMoodLogs,
       icon: Heart,
       color: 'text-success',
       bgColor: 'bg-success/10',
     },
     {
-      label: 'Day Streak',
-      value: 7,
-      icon: TrendingUp,
-      color: 'text-accent',
-      bgColor: 'bg-accent/10',
-    },
-    {
       label: 'Reflections',
-      value: 12,
+      value: stats.totalReflections,
       icon: Shield,
       color: 'text-warning',
       bgColor: 'bg-warning/10',
     },
+    {
+      label: 'Days Active',
+      value: user?.created_at ? Math.floor((Date.now() - new Date(user.created_at).getTime()) / (1000 * 60 * 60 * 24)) + 1 : 1,
+      icon: TrendingUp,
+      color: 'text-accent',
+      bgColor: 'bg-accent/10',
+    },
   ];
 
-  const handleSave = () => {
-    toast({
-      title: 'Profile updated!',
-      description: 'Your changes have been saved.',
-    });
-    setIsEditing(false);
+  const handleSave = async () => {
+    const { error } = await updateProfile({ name });
+    
+    if (error) {
+      toast({
+        title: 'Failed to update profile',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Profile updated!',
+        description: 'Your changes have been saved.',
+      });
+      setIsEditing(false);
+    }
   };
+
+  const displayName = profile?.name || user?.email?.split('@')[0] || 'Trader';
+  const displayEmail = profile?.email || user?.email || '';
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -76,9 +120,9 @@ export default function Profile() {
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
             <Avatar className="w-24 h-24 border-4 border-primary/20">
-              <AvatarImage src="" />
+              <AvatarImage src={profile?.avatar_url || ''} />
               <AvatarFallback className="text-2xl bg-primary/20 text-primary">
-                {user?.name?.charAt(0) || 'T'}
+                {displayName.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
 
@@ -90,15 +134,6 @@ export default function Profile() {
                     <Input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="bg-muted border-border"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Email</Label>
-                    <Input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
                       className="bg-muted border-border"
                     />
                   </div>
@@ -115,16 +150,16 @@ export default function Profile() {
               ) : (
                 <>
                   <h2 className="text-2xl font-serif font-bold text-foreground">
-                    {user?.name || 'Trader'}
+                    {displayName}
                   </h2>
                   <div className="flex flex-col sm:flex-row gap-4 mt-2 text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4" />
-                      {user?.email || 'trader@example.com'}
+                      {displayEmail}
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      Joined {format(user?.createdAt || new Date(), 'MMMM yyyy')}
+                      Joined {user?.created_at ? format(new Date(user.created_at), 'MMMM yyyy') : 'Recently'}
                     </div>
                   </div>
                   <Button
@@ -145,7 +180,7 @@ export default function Profile() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
+        {statCards.map((stat, index) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 20 }}
@@ -167,70 +202,31 @@ export default function Profile() {
         ))}
       </div>
 
-      {/* Recent Activity */}
+      {/* Account Info */}
       <Card className="bg-gradient-card border-border">
         <CardHeader>
-          <CardTitle className="font-serif text-xl">Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[
-              { action: 'Logged mood', detail: 'Feeling confident', time: '2 hours ago' },
-              { action: 'Created journal entry', detail: 'EURUSD swing trade', time: '5 hours ago' },
-              { action: 'Completed reflection', detail: 'Risk management prompt', time: '1 day ago' },
-              { action: 'Logged mood', detail: 'Feeling calm', time: '1 day ago' },
-              { action: 'Created journal entry', detail: 'GBPUSD day trade', time: '2 days ago' },
-            ].map((activity, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="flex items-center justify-between py-3 border-b border-border last:border-0"
-              >
-                <div>
-                  <p className="text-sm font-medium text-foreground">{activity.action}</p>
-                  <p className="text-xs text-muted-foreground">{activity.detail}</p>
-                </div>
-                <span className="text-xs text-muted-foreground">{activity.time}</span>
-              </motion.div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Account Settings */}
-      <Card className="bg-gradient-card border-border">
-        <CardHeader>
-          <CardTitle className="font-serif text-xl">Account Settings</CardTitle>
+          <CardTitle className="font-serif text-xl">Account Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between py-3 border-b border-border">
             <div>
-              <p className="text-sm font-medium text-foreground">Email Notifications</p>
-              <p className="text-xs text-muted-foreground">Receive daily reflection reminders</p>
+              <p className="text-sm font-medium text-foreground">Email Address</p>
+              <p className="text-xs text-muted-foreground">{displayEmail}</p>
             </div>
-            <Button variant="outline" size="sm">
-              Configure
-            </Button>
           </div>
           <div className="flex items-center justify-between py-3 border-b border-border">
             <div>
-              <p className="text-sm font-medium text-foreground">Export Data</p>
-              <p className="text-xs text-muted-foreground">Download all your journal entries</p>
+              <p className="text-sm font-medium text-foreground">Account Created</p>
+              <p className="text-xs text-muted-foreground">
+                {user?.created_at ? format(new Date(user.created_at), 'MMMM d, yyyy') : 'Unknown'}
+              </p>
             </div>
-            <Button variant="outline" size="sm">
-              Export
-            </Button>
           </div>
           <div className="flex items-center justify-between py-3">
             <div>
-              <p className="text-sm font-medium text-destructive">Delete Account</p>
-              <p className="text-xs text-muted-foreground">Permanently remove your account</p>
+              <p className="text-sm font-medium text-foreground">Account Status</p>
+              <p className="text-xs text-success">Active</p>
             </div>
-            <Button variant="outline" size="sm" className="text-destructive border-destructive/50 hover:bg-destructive/10">
-              Delete
-            </Button>
           </div>
         </CardContent>
       </Card>
