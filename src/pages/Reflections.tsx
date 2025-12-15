@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Lightbulb, Sparkles, Check, MessageCircle } from 'lucide-react';
+import { Lightbulb, Sparkles, Check, MessageCircle, RefreshCw, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { getReflectionResponses, createReflectionResponse } from '@/lib/api';
+import { getReflectionResponses, createReflectionResponse, getJournalEntries } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useAI } from '@/hooks/useAI';
 import { Database } from '@/integrations/supabase/types';
 
 type ReflectionRow = Database['public']['Tables']['reflection_responses']['Row'];
@@ -18,11 +19,11 @@ const defaultPrompts = [
   { id: '5', category: 'Improvement', prompt: 'If you could redo one decision from today, what would it be and why?' },
 ];
 
-const aiPrompts = [
-  "Based on your journal patterns, you seem to perform better in the morning. What's different about your mindset then?",
-  "You've mentioned FOMO in several entries. What specific situations trigger this feeling?",
-  "Your confidence tends to drop after consecutive losses. What strategies could help maintain composure?",
-];
+interface AIPrompt {
+  category: string;
+  prompt: string;
+  context: string;
+}
 
 export default function Reflections() {
   const [responses, setResponses] = useState<ReflectionRow[]>([]);
@@ -30,16 +31,34 @@ export default function Reflections() {
   const [response, setResponse] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [aiPrompts, setAiPrompts] = useState<AIPrompt[]>([]);
+  const [hasEntries, setHasEntries] = useState(false);
   const { toast } = useToast();
+  const { loading: aiLoading, error: aiError, generateReflectionPrompts } = useAI();
 
   useEffect(() => {
-    loadResponses();
+    loadData();
   }, []);
 
-  const loadResponses = async () => {
-    const { data } = await getReflectionResponses();
-    if (data) setResponses(data);
+  const loadData = async () => {
+    const [responsesResult, entriesResult] = await Promise.all([
+      getReflectionResponses(),
+      getJournalEntries(),
+    ]);
+    
+    if (responsesResult.data) setResponses(responsesResult.data);
+    setHasEntries((entriesResult.data?.length || 0) >= 3);
     setLoading(false);
+  };
+
+  const handleGenerateAIPrompts = async () => {
+    const { data: entries } = await getJournalEntries();
+    if (entries && entries.length >= 3) {
+      const result = await generateReflectionPrompts(entries.slice(0, 10));
+      if (result?.prompts) {
+        setAiPrompts(result.prompts);
+      }
+    }
   };
 
   const answeredPromptIds = responses.map(r => r.prompt_id);
@@ -82,15 +101,69 @@ export default function Reflections() {
         <p className="text-muted-foreground mt-1">Deepen your self-awareness with guided reflection questions</p>
       </div>
 
-      {/* AI Prompts */}
+      {/* AI-Generated Prompts */}
       <Card className="bg-gradient-card border-primary/30 shadow-gold">
-        <CardHeader><CardTitle className="font-serif text-xl flex items-center gap-2"><Sparkles className="w-5 h-5 text-primary" />AI-Powered Insights</CardTitle></CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="font-serif text-xl flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
+            AI-Powered Reflection Prompts
+          </CardTitle>
+          {hasEntries && (
+            <Button variant="ghost" size="sm" onClick={handleGenerateAIPrompts} disabled={aiLoading}>
+              {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            </Button>
+          )}
+        </CardHeader>
         <CardContent className="space-y-3">
-          {aiPrompts.map((prompt, i) => (
-            <div key={i} className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-              <div className="flex items-start gap-3"><div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center"><MessageCircle className="w-3 h-3 text-primary" /></div><p className="text-sm text-foreground">{prompt}</p></div>
+          {!hasEntries ? (
+            <div className="text-center py-6">
+              <p className="text-muted-foreground text-sm">
+                Create at least 3 journal entries to get personalized AI prompts
+              </p>
             </div>
-          ))}
+          ) : aiPrompts.length === 0 ? (
+            <div className="text-center py-6">
+              <Sparkles className="w-10 h-10 text-primary mx-auto mb-3 animate-pulse" />
+              <p className="text-muted-foreground text-sm mb-4">
+                Generate personalized prompts based on your journal patterns
+              </p>
+              <Button variant="gold" onClick={handleGenerateAIPrompts} disabled={aiLoading}>
+                {aiLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Generate AI Prompts
+                  </>
+                )}
+              </Button>
+              {aiError && <p className="text-destructive text-sm mt-2">{aiError}</p>}
+            </div>
+          ) : (
+            aiPrompts.map((prompt, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="p-4 rounded-lg bg-primary/5 border border-primary/20"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <MessageCircle className="w-3 h-3 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-xs text-primary font-medium uppercase">{prompt.category}</span>
+                    <p className="text-foreground mt-1">{prompt.prompt}</p>
+                    <p className="text-xs text-muted-foreground mt-2 italic">{prompt.context}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          )}
         </CardContent>
       </Card>
 

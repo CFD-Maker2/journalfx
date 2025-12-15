@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -13,10 +13,12 @@ import {
   ChevronLeft,
   ChevronRight,
   TrendingUp,
+  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -30,8 +32,28 @@ const menuItems = [
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
   const { signOut, profile, user } = useAuthContext();
+
+  useEffect(() => {
+    if (user) {
+      checkAdminRole();
+    }
+  }, [user]);
+
+  const checkAdminRole = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase.rpc('has_role', {
+      _user_id: user.id,
+      _role: 'admin',
+    });
+    
+    if (!error && data) {
+      setIsAdmin(true);
+    }
+  };
 
   const handleLogout = async () => {
     await signOut();
@@ -39,6 +61,10 @@ export function Sidebar() {
 
   const displayName = profile?.name || user?.email?.split('@')[0] || 'Trader';
   const displayEmail = profile?.email || user?.email || '';
+
+  const allMenuItems = isAdmin
+    ? [...menuItems, { icon: Shield, label: 'Admin', path: '/admin' }]
+    : menuItems;
 
   return (
     <motion.aside
@@ -69,7 +95,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {menuItems.map((item) => {
+        {allMenuItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <Link key={item.path} to={item.path}>
