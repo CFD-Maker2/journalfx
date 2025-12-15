@@ -27,6 +27,8 @@ import {
   Cell,
 } from 'recharts';
 import { format, subDays } from 'date-fns';
+import { AISummary } from '@/components/dashboard/AISummary';
+import { EmotionPerformanceChart } from '@/components/dashboard/EmotionPerformanceChart';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -353,6 +355,16 @@ export default function Dashboard() {
           </Card>
         </motion.div>
       </div>
+
+      {/* AI Summary Section */}
+      <motion.div variants={itemVariants}>
+        <AISummary />
+      </motion.div>
+
+      {/* Emotion-Performance Chart */}
+      <motion.div variants={itemVariants}>
+        <EmotionPerformanceChart />
+      </motion.div>
 
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
