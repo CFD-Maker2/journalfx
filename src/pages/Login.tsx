@@ -84,7 +84,7 @@ export default function Login() {
         className="w-full max-w-md"
       >
         <div className="space-y-2 mb-8">
-          <h2 className="text-2xl font-semibold text-foreground">
+          <h2 className="text-2xl font-semibold text-foreground font-sans">
             Welcome back
           </h2>
           <p className="text-muted-foreground">
