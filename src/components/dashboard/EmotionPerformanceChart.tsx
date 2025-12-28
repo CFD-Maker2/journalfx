@@ -88,7 +88,7 @@ export function EmotionPerformanceChart() {
     return (
       <Card className="bg-gradient-card border-border">
         <CardHeader>
-          <CardTitle className="font-serif text-xl">Emotion vs Performance</CardTitle>
+          <CardTitle className="text-xl">Emotion vs Performance</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
@@ -102,7 +102,7 @@ export function EmotionPerformanceChart() {
   return (
     <Card className="bg-gradient-card border-border">
       <CardHeader>
-        <CardTitle className="font-serif text-xl">Emotion vs Performance</CardTitle>
+        <CardTitle className="text-xl">Emotion vs Performance</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-64">

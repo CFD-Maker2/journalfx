@@ -92,7 +92,7 @@ export default function Insights() {
       className="space-y-6"
     >
       <div>
-        <h1 className="text-3xl font-serif font-bold text-foreground">
+        <h1 className="text-3xl font-bold text-foreground">
           Performance <span className="text-gradient-gold">Insights</span>
         </h1>
         <p className="text-muted-foreground mt-1">
@@ -126,7 +126,7 @@ export default function Insights() {
       {/* AI Narrative Insights */}
       <Card className="bg-gradient-card border-primary/30 shadow-gold">
         <CardHeader>
-          <CardTitle className="font-serif text-xl flex items-center gap-2">
+          <CardTitle className="text-xl flex items-center gap-2">
             <Brain className="w-5 h-5 text-primary" />
             AI-Generated Insights
           </CardTitle>
@@ -154,7 +154,7 @@ export default function Insights() {
         {/* Emotion vs Performance */}
         <Card className="bg-gradient-card border-border">
           <CardHeader>
-            <CardTitle className="font-serif text-xl">Emotion vs Performance</CardTitle>
+            <CardTitle className="text-xl">Emotion vs Performance</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-72">
@@ -188,7 +188,7 @@ export default function Insights() {
         {/* Psychology Radar */}
         <Card className="bg-gradient-card border-border">
           <CardHeader>
-            <CardTitle className="font-serif text-xl">Psychology Profile</CardTitle>
+            <CardTitle className="text-xl">Psychology Profile</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-72">
@@ -223,7 +223,7 @@ export default function Insights() {
       {/* Weekly Progress */}
       <Card className="bg-gradient-card border-border">
         <CardHeader>
-          <CardTitle className="font-serif text-xl">Weekly Progress</CardTitle>
+          <CardTitle className="text-xl">Weekly Progress</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-72">
@@ -269,7 +269,7 @@ export default function Insights() {
       {/* Summary */}
       <Card className="bg-gradient-card border-border">
         <CardHeader>
-          <CardTitle className="font-serif text-xl flex items-center gap-2">
+          <CardTitle className="text-xl flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
             Monthly Summary
           </CardTitle>

@@ -84,7 +84,7 @@ export function Sidebar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <h1 className="font-serif text-lg font-semibold text-foreground">
+              <h1 className="text-lg font-semibold text-foreground">
                 Trading
               </h1>
               <p className="text-xs text-muted-foreground -mt-1">Mindset</p>

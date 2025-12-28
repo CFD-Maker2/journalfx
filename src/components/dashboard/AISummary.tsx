@@ -41,7 +41,7 @@ export function AISummary() {
     return (
       <Card className="bg-gradient-card border-primary/30 shadow-gold">
         <CardHeader>
-          <CardTitle className="font-serif text-xl flex items-center gap-2">
+          <CardTitle className="text-xl flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             AI-Powered Insights
           </CardTitle>
@@ -62,7 +62,7 @@ export function AISummary() {
     return (
       <Card className="bg-gradient-card border-primary/30 shadow-gold">
         <CardHeader>
-          <CardTitle className="font-serif text-xl flex items-center gap-2">
+          <CardTitle className="text-xl flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             AI-Powered Insights
           </CardTitle>
@@ -97,7 +97,7 @@ export function AISummary() {
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       <Card className="bg-gradient-card border-primary/30 shadow-gold">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="font-serif text-xl flex items-center gap-2">
+          <CardTitle className="text-xl flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             AI-Powered Insights
           </CardTitle>

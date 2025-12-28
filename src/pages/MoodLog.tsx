@@ -98,7 +98,7 @@ export default function MoodLog() {
     >
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-foreground">
+          <h1 className="text-3xl font-bold text-foreground">
             Mood <span className="text-gradient-gold">Log</span>
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -120,7 +120,7 @@ export default function MoodLog() {
         >
           <Card className="bg-gradient-card border-border">
             <CardHeader>
-              <CardTitle className="font-serif text-xl flex items-center gap-2">
+              <CardTitle className="text-xl flex items-center gap-2">
                 <Heart className="w-5 h-5 text-primary" />
                 How are you feeling?
               </CardTitle>
@@ -189,7 +189,7 @@ export default function MoodLog() {
       {/* Mood History */}
       <Card className="bg-gradient-card border-border">
         <CardHeader>
-          <CardTitle className="font-serif text-xl flex items-center gap-2">
+          <CardTitle className="text-xl flex items-center gap-2">
             <Clock className="w-5 h-5" />
             Mood History
           </CardTitle>
