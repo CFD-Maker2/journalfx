@@ -136,7 +136,7 @@ export default function Journal() {
       className="max-w-4xl mx-auto space-y-6"
     >
       <div>
-        <h1 className="text-3xl font-serif font-bold text-foreground">
+        <h1 className="text-3xl font-bold text-foreground">
           New <span className="text-gradient-gold">Journal Entry</span>
         </h1>
         <p className="text-muted-foreground mt-1">
@@ -148,7 +148,7 @@ export default function Journal() {
         {/* Emotion Selection */}
         <Card className="bg-gradient-card border-border">
           <CardHeader>
-            <CardTitle className="font-serif text-xl">Current Emotion</CardTitle>
+            <CardTitle className="text-xl">Current Emotion</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-3">
@@ -212,7 +212,7 @@ export default function Journal() {
         {/* Trade Details */}
         <Card className="bg-gradient-card border-border">
           <CardHeader>
-            <CardTitle className="font-serif text-xl">Trade Details</CardTitle>
+            <CardTitle className="text-xl">Trade Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -293,7 +293,7 @@ export default function Journal() {
         {/* Reflections */}
         <Card className="bg-gradient-card border-border">
           <CardHeader>
-            <CardTitle className="font-serif text-xl">Reflections</CardTitle>
+            <CardTitle className="text-xl">Reflections</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -331,7 +331,7 @@ export default function Journal() {
         {/* Tags */}
         <Card className="bg-gradient-card border-border">
           <CardHeader>
-            <CardTitle className="font-serif text-xl flex items-center gap-2">
+            <CardTitle className="text-xl flex items-center gap-2">
               <Tag className="w-5 h-5" />
               Tags
             </CardTitle>

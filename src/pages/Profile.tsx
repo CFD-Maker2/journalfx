@@ -107,7 +107,7 @@ export default function Profile() {
       className="max-w-4xl mx-auto space-y-6"
     >
       <div>
-        <h1 className="text-3xl font-serif font-bold text-foreground">
+        <h1 className="text-3xl font-bold text-foreground">
           Your <span className="text-gradient-gold">Profile</span>
         </h1>
         <p className="text-muted-foreground mt-1">
@@ -149,7 +149,7 @@ export default function Profile() {
                 </div>
               ) : (
                 <>
-                  <h2 className="text-2xl font-serif font-bold text-foreground">
+                  <h2 className="text-2xl font-bold text-foreground">
                     {displayName}
                   </h2>
                   <div className="flex flex-col sm:flex-row gap-4 mt-2 text-muted-foreground">
@@ -205,7 +205,7 @@ export default function Profile() {
       {/* Account Info */}
       <Card className="bg-gradient-card border-border">
         <CardHeader>
-          <CardTitle className="font-serif text-xl">Account Information</CardTitle>
+          <CardTitle className="text-xl">Account Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between py-3 border-b border-border">

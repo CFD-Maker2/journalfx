@@ -81,7 +81,7 @@ export default function Timeline() {
       className="space-y-6"
     >
       <div>
-        <h1 className="text-3xl font-serif font-bold text-foreground">
+        <h1 className="text-3xl font-bold text-foreground">
           Journal <span className="text-gradient-gold">Timeline</span>
         </h1>
         <p className="text-muted-foreground mt-1">
@@ -180,7 +180,7 @@ export default function Timeline() {
                             {emotionData?.emoji}
                           </div>
                           <div>
-                            <CardTitle className="text-lg font-serif">{emotionData?.label}</CardTitle>
+                            <CardTitle className="text-lg">{emotionData?.label}</CardTitle>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Calendar className="w-4 h-4" />
                               {format(new Date(entry.entry_date), 'MMMM d, yyyy • h:mm a')}

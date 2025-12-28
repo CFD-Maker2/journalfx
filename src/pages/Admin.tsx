@@ -163,7 +163,7 @@ export default function Admin() {
       className="space-y-6"
     >
       <div>
-        <h1 className="text-3xl font-serif font-bold text-foreground">
+        <h1 className="text-3xl font-bold text-foreground">
           Admin <span className="text-gradient-gold">Dashboard</span>
         </h1>
         <p className="text-muted-foreground mt-1">
@@ -234,7 +234,7 @@ export default function Admin() {
       <Card className="bg-gradient-card border-border">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="font-serif text-xl">User Management</CardTitle>
+            <CardTitle className="text-xl">User Management</CardTitle>
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input

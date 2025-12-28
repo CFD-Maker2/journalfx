@@ -180,7 +180,7 @@ export default function Dashboard() {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-foreground">
+          <h1 className="text-3xl font-bold text-foreground">
             Welcome back, <span className="text-gradient-gold">{displayName}</span>
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -237,7 +237,7 @@ export default function Dashboard() {
         <motion.div variants={itemVariants} className="lg:col-span-2">
           <Card className="bg-gradient-card border-border">
             <CardHeader>
-              <CardTitle className="font-serif text-xl">Weekly Mood Trend</CardTitle>
+              <CardTitle className="text-xl">Weekly Mood Trend</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-64">
@@ -311,7 +311,7 @@ export default function Dashboard() {
         <motion.div variants={itemVariants}>
           <Card className="bg-gradient-card border-border h-full">
             <CardHeader>
-              <CardTitle className="font-serif text-xl">Emotion Distribution</CardTitle>
+              <CardTitle className="text-xl">Emotion Distribution</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-48">
@@ -372,7 +372,7 @@ export default function Dashboard() {
         <motion.div variants={itemVariants}>
           <Card className="bg-gradient-card border-border">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="font-serif text-xl">Today's Reflections</CardTitle>
+              <CardTitle className="text-xl">Today's Reflections</CardTitle>
               <Link to="/reflections">
                 <Button variant="ghost" size="sm">View All</Button>
               </Link>
@@ -397,7 +397,7 @@ export default function Dashboard() {
         <motion.div variants={itemVariants}>
           <Card className="bg-gradient-card border-border">
             <CardHeader>
-              <CardTitle className="font-serif text-xl">Quick Mood Check</CardTitle>
+              <CardTitle className="text-xl">Quick Mood Check</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">

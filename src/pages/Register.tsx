@@ -105,7 +105,7 @@ export default function Register() {
               <TrendingUp className="w-8 h-8 text-primary-foreground" />
             </div>
             
-            <h1 className="font-serif text-5xl font-bold text-foreground mb-4">
+            <h1 className="text-5xl font-bold text-foreground mb-4">
               Start Your <span className="text-gradient-gold">Journey</span>
             </h1>
             
@@ -150,13 +150,13 @@ export default function Register() {
             <div className="w-14 h-14 rounded-xl bg-gradient-gold flex items-center justify-center shadow-gold mx-auto mb-4">
               <TrendingUp className="w-7 h-7 text-primary-foreground" />
             </div>
-            <h1 className="font-serif text-3xl font-bold text-foreground">
+            <h1 className="text-3xl font-bold text-foreground">
               Trading <span className="text-gradient-gold">Mindset</span>
             </h1>
           </div>
 
           <div className="space-y-2 mb-8">
-            <h2 className="text-2xl font-serif font-semibold text-foreground">
+            <h2 className="text-2xl font-semibold text-foreground">
               Create your account
             </h2>
             <p className="text-muted-foreground">

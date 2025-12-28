@@ -97,14 +97,14 @@ export default function Reflections() {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-serif font-bold text-foreground">Reflection <span className="text-gradient-gold">Prompts</span></h1>
+        <h1 className="text-3xl font-bold text-foreground">Reflection <span className="text-gradient-gold">Prompts</span></h1>
         <p className="text-muted-foreground mt-1">Deepen your self-awareness with guided reflection questions</p>
       </div>
 
       {/* AI-Generated Prompts */}
       <Card className="bg-gradient-card border-primary/30 shadow-gold">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="font-serif text-xl flex items-center gap-2">
+          <CardTitle className="text-xl flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             AI-Powered Reflection Prompts
           </CardTitle>
@@ -170,7 +170,7 @@ export default function Reflections() {
       {/* Unanswered */}
       {unansweredPrompts.length > 0 && (
         <Card className="bg-gradient-card border-border">
-          <CardHeader><CardTitle className="font-serif text-xl flex items-center gap-2"><Lightbulb className="w-5 h-5" />Pending Reflections</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-xl flex items-center gap-2"><Lightbulb className="w-5 h-5" />Pending Reflections</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             {unansweredPrompts.map((prompt) => (
               <div key={prompt.id} className={`p-4 rounded-lg border ${activePrompt === prompt.id ? 'bg-muted border-primary/50' : 'bg-muted/30 border-border'}`}>
@@ -196,7 +196,7 @@ export default function Reflections() {
       {/* Answered */}
       {answeredPrompts.length > 0 && (
         <Card className="bg-gradient-card border-border">
-          <CardHeader><CardTitle className="font-serif text-xl flex items-center gap-2"><Check className="w-5 h-5 text-success" />Completed</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-xl flex items-center gap-2"><Check className="w-5 h-5 text-success" />Completed</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             {answeredPrompts.map((prompt) => {
               const answer = responses.find(r => r.prompt_id === prompt.id);
