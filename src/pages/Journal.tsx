@@ -53,6 +53,9 @@ export default function Journal() {
   const [tags, setTags] = useState<string[]>([]);
   const [outcome, setOutcome] = useState<'profit' | 'loss' | 'breakeven' | ''>('');
   const [profitLoss, setProfitLoss] = useState('');
+  const [currencyPair, setCurrencyPair] = useState('');
+  const [takeProfitPips, setTakeProfitPips] = useState('');
+  const [stopLossPips, setStopLossPips] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { toast } = useToast();
@@ -98,6 +101,9 @@ export default function Journal() {
       tags,
       outcome: (outcome || null) as TradeOutcome | null,
       profit_loss: profitLoss ? parseFloat(profitLoss) : null,
+      currency_pair: currencyPair || null,
+      take_profit_pips: takeProfitPips ? parseFloat(takeProfitPips) : null,
+      stop_loss_pips: stopLossPips ? parseFloat(stopLossPips) : null,
     });
 
     if (error) {
@@ -124,6 +130,9 @@ export default function Journal() {
       setTags([]);
       setOutcome('');
       setProfitLoss('');
+      setCurrencyPair('');
+      setTakeProfitPips('');
+      setStopLossPips('');
     }
 
     setIsSubmitting(false);
@@ -215,7 +224,17 @@ export default function Journal() {
             <CardTitle className="text-xl">Trade Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Currency Pair</Label>
+                <Input
+                  placeholder="e.g., EUR/USD, GBP/JPY"
+                  value={currencyPair}
+                  onChange={(e) => setCurrencyPair(e.target.value)}
+                  className="bg-muted border-border"
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label>Trade Type</Label>
                 <Select value={tradeType} onValueChange={(v) => setTradeType(v as TradeType)}>
@@ -249,6 +268,30 @@ export default function Journal() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Take Profit (pips)</Label>
+                <Input
+                  type="number"
+                  placeholder="e.g., 50"
+                  value={takeProfitPips}
+                  onChange={(e) => setTakeProfitPips(e.target.value)}
+                  className="bg-muted border-border"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Stop Loss (pips)</Label>
+                <Input
+                  type="number"
+                  placeholder="e.g., 25"
+                  value={stopLossPips}
+                  onChange={(e) => setStopLossPips(e.target.value)}
+                  className="bg-muted border-border"
+                />
               </div>
             </div>
 

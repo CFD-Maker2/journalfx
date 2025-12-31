@@ -19,6 +19,7 @@ export type Database = {
           ai_insight: string | null
           confidence_level: number
           created_at: string
+          currency_pair: string | null
           during_trade: string | null
           emotion: Database["public"]["Enums"]["emotion_type"]
           emotion_intensity: number
@@ -34,7 +35,9 @@ export type Database = {
           reflection_prompt: string | null
           sentiment: string | null
           sentiment_score: number | null
+          stop_loss_pips: number | null
           tags: string[] | null
+          take_profit_pips: number | null
           trade_type: Database["public"]["Enums"]["trade_type"] | null
           updated_at: string
           user_id: string
@@ -43,6 +46,7 @@ export type Database = {
           ai_insight?: string | null
           confidence_level?: number
           created_at?: string
+          currency_pair?: string | null
           during_trade?: string | null
           emotion?: Database["public"]["Enums"]["emotion_type"]
           emotion_intensity?: number
@@ -58,7 +62,9 @@ export type Database = {
           reflection_prompt?: string | null
           sentiment?: string | null
           sentiment_score?: number | null
+          stop_loss_pips?: number | null
           tags?: string[] | null
+          take_profit_pips?: number | null
           trade_type?: Database["public"]["Enums"]["trade_type"] | null
           updated_at?: string
           user_id: string
@@ -67,6 +73,7 @@ export type Database = {
           ai_insight?: string | null
           confidence_level?: number
           created_at?: string
+          currency_pair?: string | null
           during_trade?: string | null
           emotion?: Database["public"]["Enums"]["emotion_type"]
           emotion_intensity?: number
@@ -82,7 +89,9 @@ export type Database = {
           reflection_prompt?: string | null
           sentiment?: string | null
           sentiment_score?: number | null
+          stop_loss_pips?: number | null
           tags?: string[] | null
+          take_profit_pips?: number | null
           trade_type?: Database["public"]["Enums"]["trade_type"] | null
           updated_at?: string
           user_id?: string
