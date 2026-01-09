@@ -2,16 +2,9 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getJournalEntries } from '@/lib/api';
 import { EMOTIONS } from '@/types/journal';
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  Cell,
-} from 'recharts';
+import { Bar } from 'react-chartjs-2';
+import '@/components/charts/ChartConfig';
+import { chartColors, defaultOptions } from '@/components/charts/ChartConfig';
 
 interface EmotionPerformance {
   emotion: string;
@@ -74,6 +67,53 @@ export function EmotionPerformanceChart() {
     setLoading(false);
   };
 
+  // Chart.js data for stacked bar chart
+  const barChartData = {
+    labels: data.map((d) => d.emotion),
+    datasets: [
+      {
+        label: 'Wins',
+        data: data.map((d) => d.wins),
+        backgroundColor: chartColors.success,
+        stack: 'stack0',
+      },
+      {
+        label: 'Losses',
+        data: data.map((d) => d.losses),
+        backgroundColor: chartColors.destructive,
+        stack: 'stack0',
+      },
+      {
+        label: 'Breakeven',
+        data: data.map((d) => d.breakeven),
+        backgroundColor: chartColors.primary,
+        stack: 'stack0',
+      },
+    ],
+  };
+
+  const barChartOptions = {
+    ...defaultOptions,
+    indexAxis: 'y' as const,
+    plugins: {
+      ...defaultOptions.plugins,
+      legend: {
+        ...defaultOptions.plugins.legend,
+        position: 'bottom' as const,
+      },
+    },
+    scales: {
+      x: {
+        ...defaultOptions.scales.x,
+        stacked: true,
+      },
+      y: {
+        ...defaultOptions.scales.y,
+        stacked: true,
+      },
+    },
+  };
+
   if (loading) {
     return (
       <Card className="bg-gradient-card border-border">
@@ -106,30 +146,7 @@ export function EmotionPerformanceChart() {
       </CardHeader>
       <CardContent>
         <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} layout="vertical">
-              <XAxis type="number" stroke="hsl(215, 20%, 55%)" fontSize={12} />
-              <YAxis
-                dataKey="emotion"
-                type="category"
-                stroke="hsl(215, 20%, 55%)"
-                fontSize={12}
-                width={80}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(222, 47%, 9%)',
-                  border: '1px solid hsl(217, 33%, 20%)',
-                  borderRadius: '8px',
-                }}
-                formatter={(value: number, name: string) => [value, name]}
-              />
-              <Legend />
-              <Bar dataKey="wins" name="Wins" stackId="a" fill="hsl(142, 76%, 36%)" />
-              <Bar dataKey="losses" name="Losses" stackId="a" fill="hsl(0, 72%, 51%)" />
-              <Bar dataKey="breakeven" name="Breakeven" stackId="a" fill="hsl(43, 74%, 52%)" />
-            </BarChart>
-          </ResponsiveContainer>
+          <Bar data={barChartData} options={barChartOptions} />
         </div>
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
           {data.slice(0, 4).map((item) => (
