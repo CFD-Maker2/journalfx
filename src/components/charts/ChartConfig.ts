@@ -28,7 +28,7 @@ ChartJS.register(
   Filler
 );
 
-// Theme-aware chart options
+// Theme-aware chart configuration and colors
 export const chartColors = {
   primary: 'hsl(43, 74%, 52%)',
   success: 'hsl(142, 76%, 36%)',
