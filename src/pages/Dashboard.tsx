@@ -21,6 +21,7 @@ import { chartColors, defaultOptions, pieOptions } from '@/components/charts/Cha
 import { format, subDays } from 'date-fns';
 import { AISummary } from '@/components/dashboard/AISummary';
 import { EmotionPerformanceChart } from '@/components/dashboard/EmotionPerformanceChart';
+import { WeekComparison } from '@/components/dashboard/WeekComparison';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -455,6 +456,11 @@ export default function Dashboard() {
           </Card>
         </motion.div>
       </div>
+
+      {/* Week & Day Comparison */}
+      <motion.div variants={itemVariants}>
+        <WeekComparison />
+      </motion.div>
 
       {/* AI Summary Section */}
       <motion.div variants={itemVariants}>
