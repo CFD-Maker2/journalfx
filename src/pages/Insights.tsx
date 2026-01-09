@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart3, TrendingUp, Brain, Target, AlertTriangle, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bar, Radar, Line } from 'react-chartjs-2';
 import '@/components/charts/ChartConfig';
-import { chartColors, defaultOptions } from '@/components/charts/ChartConfig';
+import { chartColors, radarOptions, lineOptions, horizontalBarOptions, createGradient } from '@/components/charts/ChartConfig';
 import { getJournalEntries, getMoodLogs, getReflectionResponses } from '@/lib/api';
 import { Database } from '@/integrations/supabase/types';
 import { Link } from 'react-router-dom';
@@ -18,6 +18,7 @@ export default function Insights() {
   const [moodLogs, setMoodLogs] = useState<MoodLog[]>([]);
   const [reflectionCount, setReflectionCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const lineChartRef = useRef<any>(null);
 
   useEffect(() => {
     loadData();
@@ -58,8 +59,10 @@ export default function Insights() {
         data: Object.values(emotionPerformance).map((e) =>
           e.total > 0 ? Math.round((e.wins / e.total) * 100) : 0
         ),
-        backgroundColor: chartColors.primary,
-        borderRadius: 4,
+        backgroundColor: `rgba(${chartColors.primaryRgb}, 0.85)`,
+        hoverBackgroundColor: chartColors.primary,
+        borderRadius: 6,
+        borderSkipped: false,
       },
     ],
   };
@@ -111,55 +114,48 @@ export default function Insights() {
       {
         label: 'Current',
         data: Object.values(traits),
-        backgroundColor: 'rgba(212, 175, 55, 0.15)',
+        backgroundColor: `rgba(${chartColors.primaryRgb}, 0.12)`,
         borderColor: chartColors.primary,
-        borderWidth: 2,
+        borderWidth: 2.5,
         pointBackgroundColor: chartColors.primary,
-        pointRadius: 4,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: chartColors.primary,
+        fill: true,
       },
     ],
   };
 
   const radarChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        backgroundColor: chartColors.background,
-        borderColor: chartColors.border,
-        borderWidth: 1,
-        titleColor: '#fff',
-        bodyColor: chartColors.muted,
-        padding: 12,
-        cornerRadius: 8,
-      },
-    },
+    ...radarOptions,
     scales: {
+      ...radarOptions.scales,
       r: {
+        ...radarOptions.scales.r,
         angleLines: {
-          color: 'rgba(255, 255, 255, 0.08)',
+          color: 'rgba(255, 255, 255, 0.05)',
+          lineWidth: 1,
         },
         grid: {
-          color: 'rgba(255, 255, 255, 0.08)',
+          color: 'rgba(255, 255, 255, 0.05)',
+          circular: true,
+          lineWidth: 1,
         },
         pointLabels: {
           color: chartColors.muted,
           font: {
-            size: 12,
+            size: 11,
+            family: "'Inter', sans-serif",
+            weight: 500,
           },
+          padding: 16,
         },
         ticks: {
-          color: chartColors.muted,
-          backdropColor: 'transparent',
-          font: {
-            size: 10,
-          },
+          display: false,
         },
-        suggestedMin: 0,
-        suggestedMax: 100,
       },
     },
   };
@@ -190,20 +186,31 @@ export default function Insights() {
             })
           : [0, 0, 0, 0],
         borderColor: chartColors.primary,
-        backgroundColor: chartColors.primary,
+        backgroundColor: (context: any) => {
+          const ctx = context.chart.ctx;
+          if (ctx) {
+            return createGradient(ctx, chartColors.primaryRgb, 280);
+          }
+          return `rgba(${chartColors.primaryRgb}, 0.1)`;
+        },
         tension: 0.4,
-        pointRadius: 6,
-        pointBackgroundColor: chartColors.primary,
+        fill: true,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: chartColors.primary,
+        pointHoverBorderWidth: 2,
+        borderWidth: 2.5,
       },
     ],
   };
 
   const weeklyLineOptions = {
-    ...defaultOptions,
+    ...lineOptions,
     scales: {
-      ...defaultOptions.scales,
+      ...lineOptions.scales,
       y: {
-        ...defaultOptions.scales.y,
+        ...lineOptions.scales.y,
         min: 0,
         max: 100,
       },
@@ -211,10 +218,9 @@ export default function Insights() {
   };
 
   const emotionBarOptions = {
-    ...defaultOptions,
-    indexAxis: 'y' as const,
+    ...horizontalBarOptions,
     plugins: {
-      ...defaultOptions.plugins,
+      ...horizontalBarOptions.plugins,
       legend: {
         display: false,
       },
