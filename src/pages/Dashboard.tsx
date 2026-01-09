@@ -15,17 +15,9 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { getJournalEntries, getMoodLogs, getJournalStats } from '@/lib/api';
 import { EMOTIONS } from '@/types/journal';
 import { Link } from 'react-router-dom';
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
+import { Line, Doughnut } from 'react-chartjs-2';
+import '@/components/charts/ChartConfig';
+import { chartColors, defaultOptions, pieOptions } from '@/components/charts/ChartConfig';
 import { format, subDays } from 'date-fns';
 import { AISummary } from '@/components/dashboard/AISummary';
 import { EmotionPerformanceChart } from '@/components/dashboard/EmotionPerformanceChart';
@@ -162,6 +154,58 @@ export default function Dashboard() {
     'What would you do differently next time?',
   ];
 
+  // Chart.js data for mood trend
+  const moodChartData = {
+    labels: moodData.map((d) => d.day),
+    datasets: [
+      {
+        label: 'Confidence',
+        data: moodData.map((d) => d.confidence),
+        borderColor: chartColors.primary,
+        backgroundColor: `${chartColors.primary}33`,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+        pointBackgroundColor: chartColors.primary,
+      },
+      {
+        label: 'Stress',
+        data: moodData.map((d) => d.stress),
+        borderColor: chartColors.destructive,
+        backgroundColor: `${chartColors.destructive}33`,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+        pointBackgroundColor: chartColors.destructive,
+      },
+    ],
+  };
+
+  const moodChartOptions = {
+    ...defaultOptions,
+    scales: {
+      ...defaultOptions.scales,
+      y: {
+        ...defaultOptions.scales.y,
+        min: 0,
+        max: 5,
+      },
+    },
+  };
+
+  // Chart.js data for emotion distribution
+  const emotionChartData = {
+    labels: emotionData.map((d) => d.name),
+    datasets: [
+      {
+        data: emotionData.map((d) => d.value),
+        backgroundColor: emotionData.map((d) => d.color),
+        borderColor: emotionData.map((d) => d.color),
+        borderWidth: 1,
+      },
+    ],
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -241,57 +285,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={moodData}>
-                    <defs>
-                      <linearGradient id="colorConfidence" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(43, 74%, 52%)" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="hsl(43, 74%, 52%)" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="colorStress" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(0, 72%, 51%)" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="hsl(0, 72%, 51%)" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis
-                      dataKey="day"
-                      stroke="hsl(215, 20%, 55%)"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis
-                      stroke="hsl(215, 20%, 55%)"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                      domain={[0, 5]}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(222, 47%, 9%)',
-                        border: '1px solid hsl(217, 33%, 20%)',
-                        borderRadius: '8px',
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="confidence"
-                      stroke="hsl(43, 74%, 52%)"
-                      fillOpacity={1}
-                      fill="url(#colorConfidence)"
-                      strokeWidth={2}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="stress"
-                      stroke="hsl(0, 72%, 51%)"
-                      fillOpacity={1}
-                      fill="url(#colorStress)"
-                      strokeWidth={2}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                <Line data={moodChartData} options={moodChartOptions} />
               </div>
               <div className="flex justify-center gap-6 mt-4">
                 <div className="flex items-center gap-2">
@@ -315,30 +309,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={emotionData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={70}
-                      paddingAngle={2}
-                      dataKey="value"
-                    >
-                      {emotionData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(222, 47%, 9%)',
-                        border: '1px solid hsl(217, 33%, 20%)',
-                        borderRadius: '8px',
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                <Doughnut data={emotionChartData} options={pieOptions} />
               </div>
               <div className="flex flex-wrap justify-center gap-3 mt-4">
                 {emotionData.slice(0, 3).map((emotion) => (
