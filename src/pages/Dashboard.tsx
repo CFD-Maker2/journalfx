@@ -154,7 +154,20 @@ export default function Dashboard() {
     'What would you do differently next time?',
   ];
 
-  // Chart.js data for mood trend
+  // Helper function for tooltip labels
+  const getIntensityLabel = (value: number): string => {
+    const labels: Record<number, string> = {
+      0: 'Very Low',
+      1: 'Low',
+      2: 'Low-Moderate',
+      3: 'Moderate',
+      4: 'High',
+      5: 'Very High',
+    };
+    return labels[Math.round(value)] || 'Moderate';
+  };
+
+  // Chart.js data for mood trend - Enhanced for beginners
   const moodChartData = {
     labels: moodData.map((d) => d.day),
     datasets: [
@@ -162,33 +175,139 @@ export default function Dashboard() {
         label: 'Confidence',
         data: moodData.map((d) => d.confidence),
         borderColor: chartColors.primary,
-        backgroundColor: `${chartColors.primary}33`,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 4,
+        backgroundColor: 'transparent',
+        borderWidth: 3,
+        tension: 0.3,
+        pointRadius: 6,
         pointBackgroundColor: chartColors.primary,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointHoverRadius: 8,
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: chartColors.primary,
+        pointHoverBorderWidth: 3,
       },
       {
         label: 'Stress',
         data: moodData.map((d) => d.stress),
         borderColor: chartColors.destructive,
-        backgroundColor: `${chartColors.destructive}33`,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 4,
+        backgroundColor: 'transparent',
+        borderWidth: 3,
+        tension: 0.3,
+        pointRadius: 6,
         pointBackgroundColor: chartColors.destructive,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointHoverRadius: 8,
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: chartColors.destructive,
+        pointHoverBorderWidth: 3,
       },
     ],
   };
 
   const moodChartOptions = {
-    ...defaultOptions,
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: {
+      duration: 800,
+      easing: 'easeOutQuart' as const,
+    },
+    interaction: {
+      mode: 'index' as const,
+      intersect: false,
+    },
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top' as const,
+        align: 'end' as const,
+        labels: {
+          color: chartColors.muted,
+          font: {
+            size: 12,
+            family: "'Inter', sans-serif",
+            weight: 500,
+          },
+          padding: 20,
+          usePointStyle: true,
+          pointStyle: 'circle',
+          boxWidth: 8,
+        },
+      },
+      tooltip: {
+        enabled: true,
+        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1,
+        titleColor: '#fff',
+        titleFont: {
+          size: 13,
+          weight: 600,
+          family: "'Inter', sans-serif",
+        },
+        bodyColor: '#94a3b8',
+        bodyFont: {
+          size: 12,
+          family: "'Inter', sans-serif",
+        },
+        padding: 14,
+        cornerRadius: 10,
+        displayColors: true,
+        usePointStyle: true,
+        callbacks: {
+          label: function(context: any) {
+            const value = context.parsed.y;
+            const label = context.dataset.label;
+            const intensityLabel = getIntensityLabel(value);
+            return `${label}: ${value} (${intensityLabel})`;
+          },
+        },
+      },
+    },
     scales: {
-      ...defaultOptions.scales,
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          color: chartColors.muted,
+          font: {
+            size: 12,
+            family: "'Inter', sans-serif",
+            weight: 500,
+          },
+          padding: 8,
+        },
+        border: {
+          display: false,
+        },
+      },
       y: {
-        ...defaultOptions.scales.y,
         min: 0,
         max: 5,
+        grid: {
+          color: 'rgba(255, 255, 255, 0.08)',
+          drawBorder: false,
+        },
+        ticks: {
+          color: chartColors.muted,
+          font: {
+            size: 11,
+            family: "'Inter', sans-serif",
+          },
+          padding: 12,
+          stepSize: 1,
+          callback: function(value: number | string) {
+            const numValue = typeof value === 'string' ? parseFloat(value) : value;
+            if (numValue === 0) return '0 (Very Low)';
+            if (numValue === 5) return '5 (Very High)';
+            return numValue.toString();
+          },
+        },
+        border: {
+          display: false,
+        },
       },
     },
   };
@@ -277,24 +396,34 @@ export default function Dashboard() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Mood Trend Chart */}
+        {/* Mood Trend Chart - Enhanced for Beginners */}
         <motion.div variants={itemVariants} className="lg:col-span-2">
           <Card className="bg-gradient-card border-border">
-            <CardHeader>
+            <CardHeader className="pb-2">
               <CardTitle className="text-xl">Weekly Mood Trend</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Tracks your emotional state during trading across the week
+              </p>
             </CardHeader>
             <CardContent>
-              <div className="h-64">
+              <div className="h-72">
                 <Line data={moodChartData} options={moodChartOptions} />
               </div>
-              <div className="flex justify-center gap-6 mt-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-primary"></div>
-                  <span className="text-sm text-muted-foreground">Confidence</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-destructive"></div>
-                  <span className="text-sm text-muted-foreground">Stress</span>
+              {/* Scale explanation for beginners */}
+              <div className="mt-4 pt-4 border-t border-border/50">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-muted"></span>
+                    0 = Very Low
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-muted-foreground"></span>
+                    2-3 = Moderate
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-primary"></span>
+                    5 = Very High
+                  </span>
                 </div>
               </div>
             </CardContent>
