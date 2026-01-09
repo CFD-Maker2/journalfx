@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getJournalEntries } from '@/lib/api';
 import { EMOTIONS } from '@/types/journal';
 import { Bar } from 'react-chartjs-2';
 import '@/components/charts/ChartConfig';
-import { chartColors, defaultOptions } from '@/components/charts/ChartConfig';
+import { chartColors, horizontalBarOptions, createGradient } from '@/components/charts/ChartConfig';
 
 interface EmotionPerformance {
   emotion: string;
@@ -18,6 +18,7 @@ interface EmotionPerformance {
 export function EmotionPerformanceChart() {
   const [data, setData] = useState<EmotionPerformance[]>([]);
   const [loading, setLoading] = useState(true);
+  const chartRef = useRef<any>(null);
 
   useEffect(() => {
     loadData();
@@ -67,49 +68,67 @@ export function EmotionPerformanceChart() {
     setLoading(false);
   };
 
-  // Chart.js data for stacked bar chart
+  // Enhanced Chart.js data for stacked bar chart with gradients
   const barChartData = {
     labels: data.map((d) => d.emotion),
     datasets: [
       {
         label: 'Wins',
         data: data.map((d) => d.wins),
-        backgroundColor: chartColors.success,
+        backgroundColor: `rgba(${chartColors.successRgb}, 0.85)`,
+        hoverBackgroundColor: chartColors.success,
+        borderRadius: 4,
         stack: 'stack0',
       },
       {
         label: 'Losses',
         data: data.map((d) => d.losses),
-        backgroundColor: chartColors.destructive,
+        backgroundColor: `rgba(${chartColors.destructiveRgb}, 0.85)`,
+        hoverBackgroundColor: chartColors.destructive,
+        borderRadius: 4,
         stack: 'stack0',
       },
       {
         label: 'Breakeven',
         data: data.map((d) => d.breakeven),
-        backgroundColor: chartColors.primary,
+        backgroundColor: `rgba(${chartColors.primaryRgb}, 0.85)`,
+        hoverBackgroundColor: chartColors.primary,
+        borderRadius: 4,
         stack: 'stack0',
       },
     ],
   };
 
   const barChartOptions = {
-    ...defaultOptions,
-    indexAxis: 'y' as const,
+    ...horizontalBarOptions,
     plugins: {
-      ...defaultOptions.plugins,
+      ...horizontalBarOptions.plugins,
       legend: {
-        ...defaultOptions.plugins.legend,
+        display: true,
         position: 'bottom' as const,
+        labels: {
+          color: chartColors.muted,
+          font: {
+            size: 11,
+            family: "'Inter', sans-serif",
+          },
+          padding: 20,
+          usePointStyle: true,
+          pointStyle: 'circle',
+        },
       },
     },
     scales: {
       x: {
-        ...defaultOptions.scales.x,
+        ...horizontalBarOptions.scales.x,
         stacked: true,
       },
       y: {
-        ...defaultOptions.scales.y,
+        ...horizontalBarOptions.scales.y,
         stacked: true,
+        grid: {
+          display: false,
+        },
       },
     },
   };
@@ -146,16 +165,17 @@ export function EmotionPerformanceChart() {
       </CardHeader>
       <CardContent>
         <div className="h-64">
-          <Bar data={barChartData} options={barChartOptions} />
+          <Bar ref={chartRef} data={barChartData} options={barChartOptions} />
         </div>
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {data.slice(0, 4).map((item) => (
+          {data.slice(0, 4).map((item, index) => (
             <div
               key={item.emotion}
-              className="p-3 rounded-lg bg-muted/50 border border-border text-center"
+              className="p-3 rounded-lg bg-muted/30 border border-border/50 text-center backdrop-blur-sm transition-all duration-300 hover:bg-muted/50 hover:border-primary/30"
+              style={{ animationDelay: `${index * 100}ms` }}
             >
-              <p className="text-xs text-muted-foreground">{item.emotion}</p>
-              <p className="text-lg font-bold text-foreground">{item.winRate}%</p>
+              <p className="text-xs text-muted-foreground font-medium">{item.emotion}</p>
+              <p className="text-xl font-bold text-gradient-gold mt-1">{item.winRate}%</p>
               <p className="text-xs text-muted-foreground">Win Rate</p>
             </div>
           ))}
