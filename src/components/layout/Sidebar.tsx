@@ -85,9 +85,8 @@ export function Sidebar() {
               exit={{ opacity: 0 }}
             >
               <h1 className="text-lg font-semibold text-foreground">
-                Trading
+                JournalFX
               </h1>
-              <p className="text-xs text-muted-foreground -mt-1">Mindset</p>
             </motion.div>
           )}
         </Link>
