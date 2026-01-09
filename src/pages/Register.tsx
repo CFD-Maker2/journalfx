@@ -95,7 +95,7 @@ export default function Register() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
+        className="w-full max-w-md border border-border rounded-2xl p-8 bg-card/50"
       >
         {/* JournalFX Branding */}
         <div className="mb-8 text-center">
