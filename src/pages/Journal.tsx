@@ -18,11 +18,6 @@ import { createJournalEntry } from '@/lib/api';
 import { EMOTIONS, Emotion, TradeType, MarketCondition } from '@/types/journal';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { Database } from '@/integrations/supabase/types';
-
-type EmotionType = Database['public']['Enums']['emotion_type'];
-type TradeTypeEnum = Database['public']['Enums']['trade_type'];
-type MarketConditionEnum = Database['public']['Enums']['market_condition'];
 type TradeOutcome = Database['public']['Enums']['trade_outcome'];
 
 const tradeTypes: { value: TradeType; label: string }[] = [

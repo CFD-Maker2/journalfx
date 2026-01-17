@@ -7,9 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { getReflectionResponses, createReflectionResponse, getJournalEntries } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useAI } from '@/hooks/useAI';
-import { Database } from '@/integrations/supabase/types';
-
-type ReflectionRow = Database['public']['Tables']['reflection_responses']['Row'];
 
 const defaultPrompts = [
   { id: '1', category: 'Pre-Trade', prompt: 'What triggered your decision to enter this trade? Was it based on your strategy or an emotional impulse?' },

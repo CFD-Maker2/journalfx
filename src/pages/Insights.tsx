@@ -6,12 +6,8 @@ import { Bar, Radar, Line } from 'react-chartjs-2';
 import '@/components/charts/ChartConfig';
 import { chartColors, radarOptions, lineOptions, horizontalBarOptions, createGradient } from '@/components/charts/ChartConfig';
 import { getJournalEntries, getMoodLogs, getReflectionResponses } from '@/lib/api';
-import { Database } from '@/integrations/supabase/types';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-
-type JournalEntry = Database['public']['Tables']['journal_entries']['Row'];
-type MoodLog = Database['public']['Tables']['mood_logs']['Row'];
 
 export default function Insights() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -26,15 +22,29 @@ export default function Insights() {
 
   const loadData = async () => {
     setLoading(true);
-    const [entriesRes, moodRes, reflectionsRes] = await Promise.all([
-      getJournalEntries(),
-      getMoodLogs(),
-      getReflectionResponses(),
-    ]);
-    setEntries(entriesRes.data || []);
-    setMoodLogs(moodRes.data || []);
-    setReflectionCount(reflectionsRes.data?.length || 0);
-    setLoading(false);
+    try {
+      const [entriesRes, moodRes, reflectionsRes] = await Promise.all([
+        getJournalEntries(),
+        getMoodLogs(),
+        getReflectionResponses(),
+      ]);
+
+      // Check for API errors and throw them
+      if (entriesRes.error) throw entriesRes.error;
+      if (moodRes.error) throw moodRes.error;
+      if (reflectionsRes.error) throw reflectionsRes.error;
+
+      setEntries(entriesRes.data || []);
+      setMoodLogs(moodRes.data || []);
+      setReflectionCount(reflectionsRes.data?.length || 0);
+    } catch (error) {
+      console.error('Failed to load insights data:', error);
+      setEntries([]);
+      setMoodLogs([]);
+      setReflectionCount(0);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Calculate emotion performance from real data

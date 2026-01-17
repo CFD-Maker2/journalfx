@@ -1,6 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { User, Session } from '@supabase/supabase-js';
 
 interface Profile {
   id: string;
@@ -10,110 +8,117 @@ interface Profile {
   created_at: string;
 }
 
+interface User {
+  id: string;
+  email: string;
+}
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
+  const API_BASE_URL = 'http://localhost:5000/api';
 
-    if (!error && data) {
+  const fetchProfile = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const response = await fetch(`${API_BASE_URL}/profile`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if (response.ok) {
+      const data = await response.json();
       setProfile(data);
+      setUser({ id: data.id, email: data.email });
     }
   }, []);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-
-        // Defer profile fetch with setTimeout
-        if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user.id);
-          }, 0);
-        } else {
-          setProfile(null);
-        }
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetchProfile();
+    } else {
       setLoading(false);
-
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    }
   }, [fetchProfile]);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
     });
-    return { error };
+    if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      setUser({ id: data.user.id, email: data.user.email });
+      fetchProfile();
+      return { error: null };
+    } else {
+      const error = await response.json();
+      return { error: new Error(error.message) };
+    }
   };
 
   const signUp = async (email: string, password: string, name: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          name,
-        },
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ email, password, name }),
     });
-    return { error };
+    if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      setUser({ id: data.user.id, email: data.user.email });
+      fetchProfile();
+      return { error: null };
+    } else {
+      const error = await response.json();
+      return { error: new Error(error.message) };
+    }
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    return { error };
+    localStorage.removeItem('token');
+    setUser(null);
+    setProfile(null);
+    return { error: null };
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
-    if (!user) return { error: new Error('Not authenticated') };
-
-    const { error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', user.id);
-
-    if (!error) {
-      setProfile(prev => prev ? { ...prev, ...updates } : null);
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(updates),
+    });
+    if (response.ok) {
+      const data = await response.json();
+      setProfile(data);
+      return { error: null };
+    } else {
+      return { error: new Error('Failed to update profile') };
     }
-
-    return { error };
   };
 
   return {
     user,
-    session,
     profile,
     loading,
     signIn,
     signUp,
     signOut,
     updateProfile,
-    isAuthenticated: !!session,
+    isAuthenticated: !!user,
   };
 }

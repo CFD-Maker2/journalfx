@@ -9,10 +9,6 @@ import { getMoodLogs, createMoodLog } from '@/lib/api';
 import { EMOTIONS, Emotion } from '@/types/journal';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { Database } from '@/integrations/supabase/types';
-
-type MoodLogRow = Database['public']['Tables']['mood_logs']['Row'];
-type EmotionType = Database['public']['Enums']['emotion_type'];
 
 export default function MoodLog() {
   const [selectedEmotion, setSelectedEmotion] = useState<Emotion | null>(null);

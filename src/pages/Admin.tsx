@@ -12,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 
@@ -39,96 +38,22 @@ export default function Admin() {
   }, [user]);
 
   const checkAdminAccess = async () => {
-    if (!user) {
-      setIsAdmin(false);
-      return;
-    }
-
-    const { data, error } = await supabase.rpc('has_role', {
-      _user_id: user.id,
-      _role: 'admin',
-    });
-
-    if (error) {
-      console.error('Error checking admin role:', error);
-      setIsAdmin(false);
-    } else {
-      setIsAdmin(data);
-      if (data) {
-        loadUsers();
-      }
-    }
+    // Temporarily disable admin access
+    setIsAdmin(false);
   };
 
   const loadUsers = async () => {
     setLoading(true);
     
-    // Get all profiles
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (profilesError) {
-      toast({ title: 'Failed to load users', variant: 'destructive' });
-      setLoading(false);
-      return;
-    }
-
-    // Get journal counts for each user
-    const userStats: UserWithStats[] = await Promise.all(
-      (profiles || []).map(async (profile) => {
-        const { count } = await supabase
-          .from('journal_entries')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', profile.id);
-
-        const { data: lastEntry } = await supabase
-          .from('journal_entries')
-          .select('entry_date')
-          .eq('user_id', profile.id)
-          .order('entry_date', { ascending: false })
-          .limit(1)
-          .single();
-
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', profile.id)
-          .single();
-
-        return {
-          id: profile.id,
-          email: profile.email,
-          name: profile.name,
-          created_at: profile.created_at,
-          journal_count: count || 0,
-          last_active: lastEntry?.entry_date || null,
-          role: roleData?.role || 'user',
-        };
-      })
-    );
-
-    setUsers(userStats);
+    // TODO: Implement admin API endpoints in backend
+    // For now, return empty array
+    setUsers([]);
     setLoading(false);
   };
 
   const handleRoleChange = async (userId: string, newRole: 'admin' | 'moderator' | 'user') => {
-    // First, remove existing role
-    await supabase.from('user_roles').delete().eq('user_id', userId);
-    
-    // Then add new role
-    const { error } = await supabase.from('user_roles').insert({
-      user_id: userId,
-      role: newRole,
-    });
-
-    if (error) {
-      toast({ title: 'Failed to update role', variant: 'destructive' });
-    } else {
-      toast({ title: 'Role updated successfully' });
-      loadUsers();
-    }
+    // TODO: Implement role change API endpoint
+    toast({ title: 'Role management not implemented yet', variant: 'destructive' });
   };
 
   if (isAdmin === null) {

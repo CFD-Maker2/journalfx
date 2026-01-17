@@ -12,17 +12,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getJournalEntries } from '@/lib/api';
-import { EMOTIONS, Emotion } from '@/types/journal';
+import { EMOTIONS, Emotion, JournalEntry } from '@/types/journal';
 import { format } from 'date-fns';
-import { Database } from '@/integrations/supabase/types';
-
-type JournalEntryRow = Database['public']['Tables']['journal_entries']['Row'];
 
 export default function Timeline() {
   const [searchQuery, setSearchQuery] = useState('');
   const [emotionFilter, setEmotionFilter] = useState<string>('all');
   const [outcomeFilter, setOutcomeFilter] = useState<string>('all');
-  const [entries, setEntries] = useState<JournalEntryRow[]>([]);
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,11 +27,16 @@ export default function Timeline() {
   }, []);
 
   const loadEntries = async () => {
-    const { data, error } = await getJournalEntries();
-    if (!error && data) {
-      setEntries(data);
+    try {
+      const { data, error } = await getJournalEntries();
+      if (error) throw error;
+      setEntries(data || []);
+    } catch (error) {
+      console.error('Failed to load timeline entries:', error);
+      setEntries([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const filteredEntries = entries.filter((entry) => {

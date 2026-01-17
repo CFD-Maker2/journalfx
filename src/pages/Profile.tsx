@@ -9,9 +9,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { getJournalStats } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { format } from 'date-fns'
 
 export default function Profile() {
+  
   const { user, profile, updateProfile } = useAuthContext();
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(profile?.name || '');
@@ -29,13 +30,23 @@ export default function Profile() {
 
   useEffect(() => {
     async function loadStats() {
-      const result = await getJournalStats();
-      setStats({
-        totalEntries: result.totalEntries,
-        totalMoodLogs: result.totalMoodLogs,
-        totalReflections: result.totalReflections,
-      });
-      setLoading(false);
+      try {
+        const result = await getJournalStats();
+        setStats({
+          totalEntries: result.totalEntries,
+          totalMoodLogs: result.totalMoodLogs,
+          totalReflections: result.totalReflections,
+        });
+      } catch (error) {
+        console.error('Failed to load profile stats:', error);
+        setStats({
+          totalEntries: 0,
+          totalMoodLogs: 0,
+          totalReflections: 0,
+        });
+      } finally {
+        setLoading(false);
+      }
     }
     loadStats();
   }, []);

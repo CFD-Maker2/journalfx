@@ -52,65 +52,82 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadData() {
-      const [statsResult, entriesResult, moodLogsResult] = await Promise.all([
-        getJournalStats(),
-        getJournalEntries(),
-        getMoodLogs(),
-      ]);
+      try {
+        const [statsResult, entriesResult, moodLogsResult] = await Promise.all([
+          getJournalStats(),
+          getJournalEntries(),
+          getMoodLogs(),
+        ]);
 
-      setStats({
-        totalEntries: statsResult.totalEntries,
-        avgConfidence: statsResult.avgConfidence,
-        winRate: statsResult.winRate,
-        totalReflections: statsResult.totalReflections,
-      });
+        // Check for API errors and throw them
+        if (entriesResult.error) throw entriesResult.error;
+        if (moodLogsResult.error) throw moodLogsResult.error;
 
-      // Calculate mood trend for last 7 days
-      const last7Days = Array.from({ length: 7 }, (_, i) => {
-        const date = subDays(new Date(), 6 - i);
-        return {
-          day: format(date, 'EEE'),
-          date: format(date, 'yyyy-MM-dd'),
-          confidence: 3,
-          stress: 2,
-        };
-      });
-
-      if (entriesResult.data) {
-        entriesResult.data.forEach((entry) => {
-          const entryDate = format(new Date(entry.entry_date), 'yyyy-MM-dd');
-          const dayData = last7Days.find((d) => d.date === entryDate);
-          if (dayData) {
-            dayData.confidence = entry.confidence_level;
-            const stressEmotions = ['stressed', 'anxious', 'frustrated', 'fearful'];
-            dayData.stress = stressEmotions.includes(entry.emotion) ? entry.emotion_intensity : 1;
-          }
+        setStats({
+          totalEntries: statsResult.totalEntries,
+          avgConfidence: statsResult.avgConfidence,
+          winRate: statsResult.winRate,
+          totalReflections: statsResult.totalReflections,
         });
-      }
 
-      setMoodData(last7Days.map(({ day, confidence, stress }) => ({ day, confidence, stress })));
-
-      // Calculate emotion distribution
-      const emotionCounts: Record<string, number> = {};
-      if (entriesResult.data) {
-        entriesResult.data.forEach((entry) => {
-          emotionCounts[entry.emotion] = (emotionCounts[entry.emotion] || 0) + 1;
+        // Calculate mood trend for last 7 days
+        const last7Days = Array.from({ length: 7 }, (_, i) => {
+          const date = subDays(new Date(), 6 - i);
+          return {
+            day: format(date, 'EEE'),
+            date: format(date, 'yyyy-MM-dd'),
+            confidence: 3,
+            stress: 2,
+          };
         });
+
+        if (entriesResult.data) {
+          entriesResult.data.forEach((entry) => {
+            const entryDate = format(new Date(entry.entry_date), 'yyyy-MM-dd');
+            const dayData = last7Days.find((d) => d.date === entryDate);
+            if (dayData) {
+              dayData.confidence = entry.confidence_level;
+              const stressEmotions = ['stressed', 'anxious', 'frustrated', 'fearful'];
+              dayData.stress = stressEmotions.includes(entry.emotion) ? entry.emotion_intensity : 1;
+            }
+          });
+        }
+
+        setMoodData(last7Days.map(({ day, confidence, stress }) => ({ day, confidence, stress })));
+
+        // Calculate emotion distribution
+        const emotionCounts: Record<string, number> = {};
+        if (entriesResult.data) {
+          entriesResult.data.forEach((entry) => {
+            emotionCounts[entry.emotion] = (emotionCounts[entry.emotion] || 0) + 1;
+          });
+        }
+
+        const emotionDistribution = EMOTIONS.map((e) => ({
+          name: e.label,
+          value: emotionCounts[e.value] || 0,
+          color: e.color,
+        })).filter((e) => e.value > 0);
+
+        setEmotionData(
+          emotionDistribution.length > 0
+            ? emotionDistribution
+            : [{ name: 'No data', value: 1, color: 'hsl(217, 33%, 45%)' }]
+        );
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+        // Set default values on error
+        setStats({
+          totalEntries: 0,
+          avgConfidence: '0',
+          winRate: '0',
+          totalReflections: 0,
+        });
+        setMoodData([]);
+        setEmotionData([{ name: 'No data', value: 1, color: 'hsl(217, 33%, 45%)' }]);
+      } finally {
+        setLoading(false);
       }
-
-      const emotionDistribution = EMOTIONS.map((e) => ({
-        name: e.label,
-        value: emotionCounts[e.value] || 0,
-        color: e.color,
-      })).filter((e) => e.value > 0);
-
-      setEmotionData(
-        emotionDistribution.length > 0
-          ? emotionDistribution
-          : [{ name: 'No data', value: 1, color: 'hsl(217, 33%, 45%)' }]
-      );
-
-      setLoading(false);
     }
 
     loadData();
