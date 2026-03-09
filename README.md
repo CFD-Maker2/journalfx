@@ -48,4 +48,4 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-# thanks for visiting my porject-Trading Journal.
+# thanks for visiting my project-Trading Journal.
