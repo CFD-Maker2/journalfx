@@ -7,13 +7,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { getReflectionResponses, createReflectionResponse, getJournalEntries } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useAI } from '@/hooks/useAI';
+import { endOfDay, isWithinInterval, startOfDay } from 'date-fns';
 
 const defaultPrompts = [
-  { id: '1', category: 'Pre-Trade', prompt: 'What triggered your decision to enter this trade? Was it based on your strategy or an emotional impulse?' },
-  { id: '2', category: 'Risk Management', prompt: 'Did you stick to your risk management rules today? If not, what led you to deviate?' },
-  { id: '3', category: 'Emotional Awareness', prompt: 'How did your confidence level change throughout the trading session? What caused these shifts?' },
-  { id: '4', category: 'Learning', prompt: 'What is one thing you learned about yourself as a trader today?' },
-  { id: '5', category: 'Improvement', prompt: 'If you could redo one decision from today, what would it be and why?' },
+  { id: '1', category: 'Daily Mindset', prompt: 'How would you describe your overall mindset today from market open to close?' },
+  { id: '2', category: 'Discipline', prompt: 'Across the full day, where did you follow your process best, and where did discipline slip?' },
+  { id: '3', category: 'Emotional Pattern', prompt: 'What emotion showed up most often today, and how did it affect your decisions overall?' },
+  { id: '4', category: 'Learning', prompt: 'What is the biggest lesson from today that you want to carry into tomorrow?' },
+  { id: '5', category: 'Tomorrow Plan', prompt: 'What one clear intention will you set for tomorrow to improve your trading behavior?' },
 ];
 
 interface AIPrompt {
@@ -80,7 +81,19 @@ export default function Reflections() {
     });
   };
 
-  const answeredPromptIds = responses.map(r => r.prompt_id);
+  const todayStart = startOfDay(new Date());
+  const todayEnd = endOfDay(new Date());
+
+  const todaysResponses = responses.filter((item) => {
+    if (!item.created_at) return false;
+
+    const createdAt = new Date(item.created_at);
+    if (Number.isNaN(createdAt.getTime())) return false;
+
+    return isWithinInterval(createdAt, { start: todayStart, end: todayEnd });
+  });
+
+  const answeredPromptIds = todaysResponses.map(r => r.prompt_id);
   const unansweredPrompts = defaultPrompts.filter(p => !answeredPromptIds.includes(p.id));
   const answeredPrompts = defaultPrompts.filter(p => answeredPromptIds.includes(p.id));
 
@@ -117,7 +130,7 @@ export default function Reflections() {
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground">Reflection <span className="text-gradient-gold">Prompts</span></h1>
-        <p className="text-muted-foreground mt-1">Deepen your self-awareness with guided reflection questions</p>
+        <p className="text-muted-foreground mt-1">Five overall daily prompts reset every new day</p>
       </div>
 
       {/* AI-Generated Prompts */}
@@ -189,7 +202,7 @@ export default function Reflections() {
       {/* Unanswered */}
       {unansweredPrompts.length > 0 && (
         <Card className="bg-gradient-card border-border">
-          <CardHeader><CardTitle className="text-xl flex items-center gap-2"><Lightbulb className="w-5 h-5" />Pending Reflections</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-xl flex items-center gap-2"><Lightbulb className="w-5 h-5" />Today's Daily Reflections</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             {unansweredPrompts.map((prompt) => (
               <div key={prompt.id} className={`p-4 rounded-lg border ${activePrompt === prompt.id ? 'bg-muted border-primary/50' : 'bg-muted/30 border-border'}`}>
@@ -215,10 +228,10 @@ export default function Reflections() {
       {/* Answered */}
       {answeredPrompts.length > 0 && (
         <Card className="bg-gradient-card border-border">
-          <CardHeader><CardTitle className="text-xl flex items-center gap-2"><Check className="w-5 h-5 text-success" />Completed</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-xl flex items-center gap-2"><Check className="w-5 h-5 text-success" />Today's Completed</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             {answeredPrompts.map((prompt) => {
-              const answer = responses.find(r => r.prompt_id === prompt.id);
+              const answer = todaysResponses.find(r => r.prompt_id === prompt.id);
               return (
                 <div key={prompt.id} className="p-4 rounded-lg bg-success/5 border border-success/20">
                   <span className="text-xs text-success font-medium uppercase">{prompt.category}</span>
