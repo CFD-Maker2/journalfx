@@ -1,15 +1,61 @@
+import type { Emotion, MarketCondition, TradeType } from '@/types/journal';
+import { getAuthToken } from '@/lib/authToken';
+
 const API_BASE_URL = 'http://localhost:5000/api';
 
-type JournalEntry = any;
-type JournalEntryInsert = any;
-type MoodLog = any;
-type MoodLogInsert = any;
-type ReflectionResponse = any;
-type ReflectionResponseInsert = any;
+export type TradeOutcome = 'profit' | 'loss' | 'breakeven';
+
+interface BaseDocument {
+  id?: string;
+  _id?: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface JournalEntry extends BaseDocument {
+  entry_date: string;
+  emotion: Emotion;
+  emotion_intensity: number;
+  confidence_level: number;
+  trade_type?: TradeType | null;
+  market_condition?: MarketCondition | null;
+  pre_trade?: string | null;
+  during_trade?: string | null;
+  post_trade?: string | null;
+  tags?: string[];
+  outcome?: TradeOutcome | null;
+  profit_loss?: number | null;
+  ai_insight?: string | null;
+  reflection_prompt?: string | null;
+  currency_pair?: string | null;
+  take_profit_pips?: number | null;
+  stop_loss_pips?: number | null;
+}
+
+export type JournalEntryInsert = Omit<JournalEntry, keyof BaseDocument | 'id' | '_id'>;
+
+export interface MoodLog extends BaseDocument {
+  log_date: string;
+  emotion: Emotion;
+  intensity: number;
+  notes?: string | null;
+}
+
+export type MoodLogInsert = Omit<MoodLog, keyof BaseDocument | 'id' | '_id'>;
+
+export interface ReflectionResponse extends BaseDocument {
+  prompt_id: string;
+  prompt_text: string;
+  category: string;
+  response: string;
+}
+
+export type ReflectionResponseInsert = Omit<ReflectionResponse, keyof BaseDocument | 'id' | '_id'>;
 
 // Journal Entries
 export async function getJournalEntries() {
-  const token = localStorage.getItem('token');
+  const token = getAuthToken();
   const response = await fetch(`${API_BASE_URL}/journal`, {
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -23,7 +69,7 @@ export async function getJournalEntries() {
 }
 
 export async function createJournalEntry(entry: Omit<JournalEntryInsert, 'user_id'>) {
-  const token = localStorage.getItem('token');
+  const token = getAuthToken();
   const response = await fetch(`${API_BASE_URL}/journal`, {
     method: 'POST',
     headers: {
@@ -40,7 +86,7 @@ export async function createJournalEntry(entry: Omit<JournalEntryInsert, 'user_i
 }
 
 export async function updateJournalEntry(id: string, updates: Partial<JournalEntry>) {
-  const token = localStorage.getItem('token');
+  const token = getAuthToken();
   const response = await fetch(`${API_BASE_URL}/journal/${id}`, {
     method: 'PUT',
     headers: {
@@ -57,7 +103,7 @@ export async function updateJournalEntry(id: string, updates: Partial<JournalEnt
 }
 
 export async function deleteJournalEntry(id: string) {
-  const token = localStorage.getItem('token');
+  const token = getAuthToken();
   const response = await fetch(`${API_BASE_URL}/journal/${id}`, {
     method: 'DELETE',
     headers: {
@@ -72,7 +118,7 @@ export async function deleteJournalEntry(id: string) {
 
 // Mood Logs
 export async function getMoodLogs() {
-  const token = localStorage.getItem('token');
+  const token = getAuthToken();
   const response = await fetch(`${API_BASE_URL}/mood`, {
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -86,7 +132,7 @@ export async function getMoodLogs() {
 }
 
 export async function createMoodLog(log: Omit<MoodLogInsert, 'user_id'>) {
-  const token = localStorage.getItem('token');
+  const token = getAuthToken();
   const response = await fetch(`${API_BASE_URL}/mood`, {
     method: 'POST',
     headers: {
@@ -103,7 +149,7 @@ export async function createMoodLog(log: Omit<MoodLogInsert, 'user_id'>) {
 }
 
 export async function deleteMoodLog(id: string) {
-  const token = localStorage.getItem('token');
+  const token = getAuthToken();
   const response = await fetch(`${API_BASE_URL}/mood/${id}`, {
     method: 'DELETE',
     headers: {
@@ -118,7 +164,7 @@ export async function deleteMoodLog(id: string) {
 
 // Reflection Responses
 export async function getReflectionResponses() {
-  const token = localStorage.getItem('token');
+  const token = getAuthToken();
   const response = await fetch(`${API_BASE_URL}/reflection`, {
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -132,7 +178,7 @@ export async function getReflectionResponses() {
 }
 
 export async function createReflectionResponse(response: Omit<ReflectionResponseInsert, 'user_id'>) {
-  const token = localStorage.getItem('token');
+  const token = getAuthToken();
   const responseFetch = await fetch(`${API_BASE_URL}/reflection`, {
     method: 'POST',
     headers: {

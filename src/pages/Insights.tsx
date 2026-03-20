@@ -1,20 +1,24 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart3, TrendingUp, Brain, Target, AlertTriangle, FileText } from 'lucide-react';
+import { BarChart3, TrendingUp, Brain, Target, AlertTriangle, FileText, Sparkles, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bar, Radar, Line } from 'react-chartjs-2';
+import type { ScriptableContext } from 'chart.js';
 import '@/components/charts/ChartConfig';
 import { chartColors, radarOptions, lineOptions, horizontalBarOptions, createGradient } from '@/components/charts/ChartConfig';
 import { getJournalEntries, getMoodLogs, getReflectionResponses } from '@/lib/api';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useAI, type SummaryResult } from '@/hooks/useAI';
+import { format, startOfWeek } from 'date-fns';
 
 export default function Insights() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [moodLogs, setMoodLogs] = useState<MoodLog[]>([]);
   const [reflectionCount, setReflectionCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const lineChartRef = useRef<any>(null);
+  const [aiSummary, setAiSummary] = useState<SummaryResult | null>(null);
+  const { loading: aiLoading, error: aiError, generateSummary } = useAI();
 
   useEffect(() => {
     loadData();
@@ -44,6 +48,17 @@ export default function Insights() {
       setReflectionCount(0);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateAiSummary = async () => {
+    if (entries.length < 3) {
+      return;
+    }
+
+    const result = await generateSummary(entries.slice(0, 30));
+    if (result) {
+      setAiSummary(result);
     }
   };
 
@@ -170,33 +185,43 @@ export default function Insights() {
     },
   };
 
-  // Weekly progress from mood logs (group by week)
+  // Weekly progress from mood logs using calendar week starts to avoid cross-month collisions.
   const weeklyData = moodLogs.reduce((acc, log) => {
-    const date = new Date(log.log_date);
-    const weekNum = Math.ceil((date.getDate()) / 7);
-    const weekKey = `W${weekNum}`;
-    if (!acc[weekKey]) {
-      acc[weekKey] = { intensities: [], count: 0 };
-    }
-    acc[weekKey].intensities.push(log.intensity);
-    acc[weekKey].count++;
-    return acc;
-  }, {} as Record<string, { intensities: number[]; count: number }>);
+    const weekStart = startOfWeek(new Date(log.log_date), { weekStartsOn: 1 });
+    const weekKey = format(weekStart, 'yyyy-MM-dd');
 
-  const weeklyLabels = Object.keys(weeklyData).slice(0, 4);
+    if (!acc[weekKey]) {
+      acc[weekKey] = {
+        label: format(weekStart, 'MMM d'),
+        intensities: [],
+      };
+    }
+
+    acc[weekKey].intensities.push(Number(log.intensity) || 0);
+    return acc;
+  }, {} as Record<string, { label: string; intensities: number[] }>);
+
+  const weeklyKeys = Object.keys(weeklyData)
+    .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+    .slice(-4);
+
+  const weeklyLabels = weeklyKeys.length > 0
+    ? weeklyKeys.map((key) => weeklyData[key].label)
+    : ['W1', 'W2', 'W3', 'W4'];
+
   const weeklyLineData = {
-    labels: weeklyLabels.length > 0 ? weeklyLabels : ['W1', 'W2', 'W3', 'W4'],
+    labels: weeklyLabels,
     datasets: [
       {
         label: 'Avg Mood Intensity',
-        data: weeklyLabels.length > 0
-          ? weeklyLabels.map((week) => {
-              const intensities = weeklyData[week].intensities;
+        data: weeklyKeys.length > 0
+          ? weeklyKeys.map((weekKey) => {
+              const intensities = weeklyData[weekKey].intensities;
               return Math.round(intensities.reduce((a, b) => a + b, 0) / intensities.length * 10);
             })
           : [0, 0, 0, 0],
         borderColor: chartColors.primary,
-        backgroundColor: (context: any) => {
+        backgroundColor: (context: ScriptableContext<'line'>) => {
           const ctx = context.chart.ctx;
           if (ctx) {
             return createGradient(ctx, chartColors.primaryRgb, 280);
@@ -378,6 +403,72 @@ export default function Insights() {
           </motion.div>
         ))}
       </div>
+
+      {/* Gemini Summary */}
+      {entries.length >= 3 && (
+        <Card className="bg-gradient-card border-primary/30 shadow-gold">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              Gemini Insight Summary
+            </CardTitle>
+            <Button variant="ghost" size="sm" onClick={handleGenerateAiSummary} disabled={aiLoading}>
+              <RefreshCw className={`w-4 h-4 ${aiLoading ? 'animate-spin' : ''}`} />
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {!aiSummary ? (
+              <div className="text-center py-6">
+                <p className="text-muted-foreground text-sm mb-4">
+                  Generate an AI summary based on your journal, mood logs, and reflections.
+                </p>
+                <Button variant="gold" onClick={handleGenerateAiSummary} disabled={aiLoading}>
+                  {aiLoading ? 'Analyzing...' : 'Generate AI Summary'}
+                </Button>
+                {aiError && <p className="text-destructive text-sm mt-2">{aiError}</p>}
+              </div>
+            ) : (
+              <>
+                <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                  <p className="text-foreground leading-relaxed whitespace-pre-line">{aiSummary.narrative}</p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium text-foreground mb-2">Key Insights</h4>
+                    <ul className="space-y-2">
+                      {aiSummary.keyInsights.map((insight, index) => (
+                        <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
+                          <span className="text-primary">•</span>
+                          <span>{insight}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-foreground mb-2">Recommendations</h4>
+                    <ul className="space-y-2">
+                      {aiSummary.recommendations.map((recommendation, index) => (
+                        <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
+                          <span className="text-success">•</span>
+                          <span>{recommendation}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                  <h4 className="font-medium text-foreground mb-1">Emotion-Performance Link</h4>
+                  <p className="text-sm text-muted-foreground">{aiSummary.emotionPerformanceLink}</p>
+                </div>
+
+                {aiError && <p className="text-destructive text-sm">{aiError}</p>}
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

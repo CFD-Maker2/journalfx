@@ -29,6 +29,7 @@ export default function Reflections() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [aiPrompts, setAiPrompts] = useState<AIPrompt[]>([]);
+  const [promptBatchVersion, setPromptBatchVersion] = useState(0);
   const [hasEntries, setHasEntries] = useState(false);
   const { toast } = useToast();
   const { loading: aiLoading, error: aiError, generateReflectionPrompts } = useAI();
@@ -49,13 +50,34 @@ export default function Reflections() {
   };
 
   const handleGenerateAIPrompts = async () => {
-    const { data: entries } = await getJournalEntries();
-    if (entries && entries.length >= 3) {
-      const result = await generateReflectionPrompts(entries.slice(0, 10));
-      if (result?.prompts) {
-        setAiPrompts(result.prompts);
-      }
+    const { data: entries, error } = await getJournalEntries();
+
+    if (error || !entries || entries.length < 3) {
+      toast({
+        title: 'Not enough journal data',
+        description: 'Create at least 3 journal entries to generate AI prompts.',
+        variant: 'destructive',
+      });
+      return;
     }
+
+    const result = await generateReflectionPrompts(entries.slice(0, 10), {
+      refreshToken: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      excludePrompts: aiPrompts.map((item) => item.prompt),
+    });
+
+    if (result?.prompts?.length) {
+      setAiPrompts(result.prompts);
+      setPromptBatchVersion((prev) => prev + 1);
+      toast({ title: 'AI prompts refreshed' });
+      return;
+    }
+
+    toast({
+      title: 'Unable to generate prompts',
+      description: 'Please try again in a few seconds.',
+      variant: 'destructive',
+    });
   };
 
   const answeredPromptIds = responses.map(r => r.prompt_id);
@@ -142,7 +164,7 @@ export default function Reflections() {
           ) : (
             aiPrompts.map((prompt, i) => (
               <motion.div
-                key={i}
+                key={`${promptBatchVersion}-${prompt.category}-${prompt.prompt.slice(0, 40)}-${i}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}

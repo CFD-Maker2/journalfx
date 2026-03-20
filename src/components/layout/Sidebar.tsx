@@ -60,7 +60,7 @@ export function Sidebar() {
               exit={{ opacity: 0 }}
             >
               <h1 className="text-lg font-semibold text-foreground">
-                Trading Journal
+                JournalFX
               </h1>
             </motion.div>
           )}

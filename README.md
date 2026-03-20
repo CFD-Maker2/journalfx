@@ -1,51 +1,43 @@
-#  Trading Journal project
+# JournalFX
 
-## Project info
+JournalFX is a mini full-stack trading psychology journal. The frontend is built with Vite, React, TypeScript, Tailwind CSS, and shadcn/ui. The backend is an Express and MongoDB API in [backend-code](backend-code).
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Frontend
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The frontend runs on port `8080` by default.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Backend
 
-**Use GitHub Codespaces**
+```sh
+cd backend-code
+npm install
+npm run dev
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Create `backend-code/.env` with these values before starting the API:
 
-## What technologies are used for this project?
+```env
+MONGODB_URI=mongodb://localhost:27017/trading-journal
+JWT_SECRET=replace-this-with-a-secure-secret
+PORT=5000
+FRONTEND_URL=http://localhost:8080
+```
 
-This project is built with:
+The frontend API client currently targets `http://localhost:5000/api` in `src/lib/api.ts`.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Available Scripts
 
-# thanks for visiting my project-Trading Journal.
+- `npm run dev` starts the frontend dev server
+- `npm run build` creates a production frontend build
+- `npm run lint` runs ESLint on the frontend code
+
+## Project Structure
+
+- `src/` contains the React frontend
+- `backend-code/` contains the Express and MongoDB backend
+- `src/components/ui/` contains the shared UI primitives used by the app

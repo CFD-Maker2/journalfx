@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link, Navigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { TrendingUp, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const navigate = useNavigate();
-  const { signIn, isAuthenticated, loading } = useAuthContext();
+  const { signIn, loading } = useAuthContext();
   const { toast } = useToast();
 
   if (loading) {
@@ -30,10 +30,6 @@ export default function Login() {
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
-  }
-
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,9 +53,14 @@ export default function Login() {
     const { error } = await signIn(email, password);
     
     if (error) {
+      const normalizedMessage = (error.message || '').toLowerCase();
+      const isInvalidCredentials =
+        normalizedMessage.includes('invalid credentials') ||
+        normalizedMessage.includes('invalid login credentials');
+
       toast({
         title: 'Login failed',
-        description: error.message === 'Invalid login credentials' 
+        description: isInvalidCredentials
           ? 'Invalid email or password. Please try again.'
           : error.message,
         variant: 'destructive',

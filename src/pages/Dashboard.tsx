@@ -16,6 +16,7 @@ import { getJournalEntries, getMoodLogs, getJournalStats } from '@/lib/api';
 import { EMOTIONS } from '@/types/journal';
 import { Link } from 'react-router-dom';
 import { Line, Doughnut } from 'react-chartjs-2';
+import type { TooltipItem } from 'chart.js';
 import '@/components/charts/ChartConfig';
 import { chartColors, defaultOptions, pieOptions } from '@/components/charts/ChartConfig';
 import { format, subDays } from 'date-fns';
@@ -274,8 +275,8 @@ export default function Dashboard() {
         displayColors: true,
         usePointStyle: true,
         callbacks: {
-          label: function(context: any) {
-            const value = context.parsed.y;
+          label: function(context: TooltipItem<'line'>) {
+            const value = Number(context.parsed.y ?? 0);
             const label = context.dataset.label;
             const intensityLabel = getIntensityLabel(value);
             return `${label}: ${value} (${intensityLabel})`;

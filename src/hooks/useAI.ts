@@ -1,46 +1,78 @@
 import { useState } from 'react';
+import type { JournalEntry } from '@/lib/api';
+import { getAuthToken } from '@/lib/authToken';
 
-interface SentimentResult {
+export interface SentimentResult {
   sentiment: 'positive' | 'negative' | 'neutral' | 'mixed';
   confidence: number;
   emotions: string[];
   summary: string;
 }
 
-interface SummaryResult {
+export interface SummaryResult {
   narrative: string;
   keyInsights: string[];
   emotionPerformanceLink: string;
   recommendations: string[];
 }
 
-interface ReflectionPrompt {
+export interface ReflectionPrompt {
   category: string;
   prompt: string;
   context: string;
 }
 
-interface ReflectionPromptsResult {
+export interface ReflectionPromptsResult {
   prompts: ReflectionPrompt[];
+}
+
+interface ReflectionPromptOptions {
+  refreshToken?: string;
+  excludePrompts?: string[];
 }
 
 export function useAI() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const API_BASE_URL = 'http://localhost:5000/api';
+
+  const callAIEndpoint = async <T>(path: string, payload: Record<string, unknown>) => {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('You must be logged in to use AI features.');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/ai/${path}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      let message = 'AI request failed';
+      try {
+        const errorBody = await response.json();
+        message = errorBody?.error || message;
+      } catch {
+        // Ignore JSON parse errors and keep fallback message.
+      }
+
+      throw new Error(message);
+    }
+
+    return response.json() as Promise<T>;
+  };
 
   const analyzeSentiment = async (content: string): Promise<SentimentResult | null> => {
     setLoading(true);
     setError(null);
     
     try {
-      // Mock data for now, will integrate Gemini later
-      const mockResult: SentimentResult = {
-        sentiment: 'neutral',
-        confidence: 0.5,
-        emotions: ['calm'],
-        summary: 'Analysis not available yet.',
-      };
-      return mockResult;
+      const result = await callAIEndpoint<SentimentResult>('sentiment', { content });
+      return result;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to analyze sentiment');
       return null;
@@ -49,19 +81,14 @@ export function useAI() {
     }
   };
 
-  const generateSummary = async (entries: any[]): Promise<SummaryResult | null> => {
+  const generateSummary = async (entries: JournalEntry[]): Promise<SummaryResult | null> => {
     setLoading(true);
     setError(null);
     
     try {
-      // Mock data for now
-      const mockResult: SummaryResult = {
-        narrative: 'Summary not available yet.',
-        keyInsights: ['Insight 1'],
-        emotionPerformanceLink: 'Link not available.',
-        recommendations: ['Recommendation 1'],
-      };
-      return mockResult;
+      const requestedLimit = Math.min(Math.max(entries.length || 3, 3), 30);
+      const result = await callAIEndpoint<SummaryResult>('summary', { limit: requestedLimit });
+      return result;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate summary');
       return null;
@@ -70,22 +97,21 @@ export function useAI() {
     }
   };
 
-  const generateReflectionPrompts = async (entries: any[]): Promise<ReflectionPromptsResult | null> => {
+  const generateReflectionPrompts = async (
+    entries: JournalEntry[],
+    options: ReflectionPromptOptions = {},
+  ): Promise<ReflectionPromptsResult | null> => {
     setLoading(true);
     setError(null);
     
     try {
-      // Mock data for now
-      const mockResult: ReflectionPromptsResult = {
-        prompts: [
-          {
-            category: 'Performance',
-            prompt: 'What patterns do you notice in your trading?',
-            context: 'Based on your recent entries.',
-          },
-        ],
-      };
-      return mockResult;
+      const requestedLimit = Math.min(Math.max(entries.length || 3, 3), 15);
+      const result = await callAIEndpoint<ReflectionPromptsResult>('reflection-prompts', {
+        limit: requestedLimit,
+        refreshToken: options.refreshToken || `${Date.now()}`,
+        excludePrompts: Array.isArray(options.excludePrompts) ? options.excludePrompts.slice(0, 10) : [],
+      });
+      return result;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate prompts');
       return null;

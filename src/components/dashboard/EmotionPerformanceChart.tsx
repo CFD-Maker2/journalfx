@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getJournalEntries } from '@/lib/api';
 import { EMOTIONS } from '@/types/journal';
@@ -18,7 +18,6 @@ interface EmotionPerformance {
 export function EmotionPerformanceChart() {
   const [data, setData] = useState<EmotionPerformance[]>([]);
   const [loading, setLoading] = useState(true);
-  const chartRef = useRef<any>(null);
 
   useEffect(() => {
     loadData();
@@ -165,7 +164,7 @@ export function EmotionPerformanceChart() {
       </CardHeader>
       <CardContent>
         <div className="h-64">
-          <Bar ref={chartRef} data={barChartData} options={barChartOptions} />
+          <Bar data={barChartData} options={barChartOptions} />
         </div>
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
           {data.slice(0, 4).map((item, index) => (

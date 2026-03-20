@@ -23,6 +23,7 @@ export default function Profile() {
   });
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const profileCreatedAt = profile?.created_at || null;
 
   useEffect(() => {
     setName(profile?.name || '');
@@ -75,7 +76,9 @@ export default function Profile() {
     },
     {
       label: 'Days Active',
-      value: user?.created_at ? Math.floor((Date.now() - new Date(user.created_at).getTime()) / (1000 * 60 * 60 * 24)) + 1 : 1,
+      value: profileCreatedAt
+        ? Math.floor((Date.now() - new Date(profileCreatedAt).getTime()) / (1000 * 60 * 60 * 24)) + 1
+        : 1,
       icon: TrendingUp,
       color: 'text-accent',
       bgColor: 'bg-accent/10',
@@ -153,7 +156,13 @@ export default function Profile() {
                       <Save className="w-4 h-4" />
                       Save Changes
                     </Button>
-                    <Button variant="outline" onClick={() => setIsEditing(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setName(profile?.name || '');
+                        setIsEditing(false);
+                      }}
+                    >
                       Cancel
                     </Button>
                   </div>
@@ -170,7 +179,7 @@ export default function Profile() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      Joined {user?.created_at ? format(new Date(user.created_at), 'MMMM yyyy') : 'Recently'}
+                      Joined {profileCreatedAt ? format(new Date(profileCreatedAt), 'MMMM yyyy') : 'Recently'}
                     </div>
                   </div>
                   <Button
@@ -229,7 +238,7 @@ export default function Profile() {
             <div>
               <p className="text-sm font-medium text-foreground">Account Created</p>
               <p className="text-xs text-muted-foreground">
-                {user?.created_at ? format(new Date(user.created_at), 'MMMM d, yyyy') : 'Unknown'}
+                {profileCreatedAt ? format(new Date(profileCreatedAt), 'MMMM d, yyyy') : 'Unknown'}
               </p>
             </div>
           </div>

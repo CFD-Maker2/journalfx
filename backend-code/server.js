@@ -8,6 +8,7 @@ const journalRoutes = require('./routes/journal');
 const moodRoutes = require('./routes/mood');
 const profileRoutes = require('./routes/profile');
 const reflectionRoutes = require('./routes/reflection');
+const aiRoutes = require('./routes/ai');
 
 const app = express();
 
@@ -35,7 +36,7 @@ app.use(cors({
 app.use(express.json());
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/trading-journal')
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/journalfx-mp')
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
@@ -45,6 +46,7 @@ app.use('/api/journal', journalRoutes);
 app.use('/api/mood', moodRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/reflection', reflectionRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

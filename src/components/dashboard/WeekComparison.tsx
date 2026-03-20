@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Minus, Calendar, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getJournalEntries, getMoodLogs } from '@/lib/api';
+import type { JournalEntry } from '@/lib/api';
 import { format, subDays, startOfWeek, endOfWeek, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 
 interface ComparisonData {
@@ -20,7 +21,7 @@ interface PeriodStats {
   losses: number;
 }
 
-const calculateStats = (entries: any[]): PeriodStats => {
+const calculateStats = (entries: JournalEntry[]): PeriodStats => {
   if (entries.length === 0) {
     return { entries: 0, avgConfidence: 0, avgIntensity: 0, wins: 0, losses: 0 };
   }
