@@ -95,7 +95,7 @@ export default function MoodLog() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
-            Mood <span className="text-gradient-gold">Log</span>
+            Daily <span className="text-gradient-gold">Check-In History</span>
           </h1>
           <p className="text-muted-foreground mt-1">
             Track day-level emotional check-ins across your overall trading day

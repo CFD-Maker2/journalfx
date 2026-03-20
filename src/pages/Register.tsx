@@ -97,14 +97,11 @@ export default function Register() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md border border-border rounded-2xl p-8 bg-card/50"
       >
-        {/* JournalFX Branding */}
+        {/* App Icon */}
         <div className="mb-8 text-center">
           <div className="w-14 h-14 rounded-xl bg-gradient-gold flex items-center justify-center shadow-gold mx-auto mb-4">
             <TrendingUp className="w-7 h-7 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground">
-            Journal<span className="text-gradient-gold">FX</span>
-          </h1>
         </div>
 
         <div className="space-y-2 mb-8">
