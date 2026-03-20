@@ -71,30 +71,53 @@ export default function Dashboard() {
           totalReflections: statsResult.totalReflections,
         });
 
-        // Calculate mood trend for last 7 days
+        // Calculate mood trend for last 7 days from mood logs.
+        const confidenceEmotions = new Set(['confident', 'focused', 'calm', 'excited']);
+        const stressEmotions = new Set(['stressed', 'anxious', 'frustrated', 'fearful']);
+
         const last7Days = Array.from({ length: 7 }, (_, i) => {
           const date = subDays(new Date(), 6 - i);
           return {
             day: format(date, 'EEE'),
             date: format(date, 'yyyy-MM-dd'),
-            confidence: 3,
-            stress: 2,
+            confidenceValues: [] as number[],
+            stressValues: [] as number[],
           };
         });
 
-        if (entriesResult.data) {
-          entriesResult.data.forEach((entry) => {
-            const entryDate = format(new Date(entry.entry_date), 'yyyy-MM-dd');
-            const dayData = last7Days.find((d) => d.date === entryDate);
-            if (dayData) {
-              dayData.confidence = entry.confidence_level;
-              const stressEmotions = ['stressed', 'anxious', 'frustrated', 'fearful'];
-              dayData.stress = stressEmotions.includes(entry.emotion) ? entry.emotion_intensity : 1;
+        if (moodLogsResult.data) {
+          moodLogsResult.data.forEach((log) => {
+            const logDate = format(new Date(log.log_date), 'yyyy-MM-dd');
+            const dayData = last7Days.find((d) => d.date === logDate);
+            if (!dayData) {
+              return;
+            }
+
+            const intensity = Number(log.intensity) || 3;
+
+            if (confidenceEmotions.has(log.emotion)) {
+              dayData.confidenceValues.push(intensity);
+            }
+
+            if (stressEmotions.has(log.emotion)) {
+              dayData.stressValues.push(intensity);
             }
           });
         }
 
-        setMoodData(last7Days.map(({ day, confidence, stress }) => ({ day, confidence, stress })));
+        const averageOrFallback = (values: number[], fallback: number) => {
+          if (values.length === 0) return fallback;
+          const avg = values.reduce((sum, value) => sum + value, 0) / values.length;
+          return Number(avg.toFixed(1));
+        };
+
+        setMoodData(
+          last7Days.map(({ day, confidenceValues, stressValues }) => ({
+            day,
+            confidence: averageOrFallback(confidenceValues, 3),
+            stress: averageOrFallback(stressValues, 2),
+          })),
+        );
 
         // Calculate emotion distribution
         const emotionCounts: Record<string, number> = {};
