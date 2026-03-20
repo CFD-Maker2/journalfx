@@ -144,7 +144,7 @@ export default function Journal() {
           New <span className="text-gradient-gold">Journal Entry</span>
         </h1>
         <p className="text-muted-foreground mt-1">
-          Document your thoughts and emotions around your trading session
+          Capture this trade's setup, execution, and emotion snapshot
         </p>
       </div>
 
@@ -152,7 +152,10 @@ export default function Journal() {
         {/* Emotion Selection */}
         <Card className="bg-gradient-card border-border">
           <CardHeader>
-            <CardTitle className="text-xl">Current Emotion</CardTitle>
+            <CardTitle className="text-xl">Trade Emotion Snapshot</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              This mood is for this specific journal entry only.
+            </p>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-3">
@@ -177,7 +180,7 @@ export default function Journal() {
 
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
-                <Label>Emotion Intensity</Label>
+                <Label>Trade Emotion Intensity</Label>
                 <Slider
                   value={emotionIntensity}
                   onValueChange={setEmotionIntensity}
@@ -194,7 +197,7 @@ export default function Journal() {
               </div>
 
               <div className="space-y-3">
-                <Label>Confidence Level</Label>
+                <Label>Trade Confidence Level</Label>
                 <Slider
                   value={confidenceLevel}
                   onValueChange={setConfidenceLevel}

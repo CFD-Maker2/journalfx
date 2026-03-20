@@ -98,12 +98,12 @@ export default function MoodLog() {
             Mood <span className="text-gradient-gold">Log</span>
           </h1>
           <p className="text-muted-foreground mt-1">
-            Track your emotional state throughout your trading sessions
+            Track day-level emotional check-ins across your overall trading day
           </p>
         </div>
         <Button variant="gold" onClick={() => setShowForm(!showForm)}>
           <Plus className="w-5 h-5" />
-          Log Mood
+          Add Check-In
         </Button>
       </div>
 
@@ -118,7 +118,7 @@ export default function MoodLog() {
             <CardHeader>
               <CardTitle className="text-xl flex items-center gap-2">
                 <Heart className="w-5 h-5 text-primary" />
-                How are you feeling?
+                How are you feeling right now?
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -160,9 +160,9 @@ export default function MoodLog() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Notes (optional)</label>
+                <label className="text-sm font-medium text-foreground">Check-in Notes (optional)</label>
                 <Textarea
-                  placeholder="What's on your mind? Any triggers or thoughts?"
+                  placeholder="How did the day feel overall? Any triggers or patterns so far?"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className="min-h-20 bg-muted border-border resize-none"
@@ -187,14 +187,14 @@ export default function MoodLog() {
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2">
             <Clock className="w-5 h-5" />
-            Mood History
+            Daily Check-In History
           </CardTitle>
         </CardHeader>
         <CardContent>
           {moodLogs.length === 0 ? (
             <div className="text-center py-8">
               <Heart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No mood logs yet. Start tracking your emotions!</p>
+              <p className="text-muted-foreground">No check-ins yet. Start tracking your day-level emotions!</p>
             </div>
           ) : (
             <div className="space-y-4">
