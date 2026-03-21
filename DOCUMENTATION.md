@@ -308,6 +308,18 @@ The Dashboard module synthesizes data from journal entries and mood logs into vi
 
 The Admin module is a placeholder interface for system administration functions. The frontend `Admin.tsx` page currently displays user statistics and logs. A future implementation could include user management, system health monitoring, or aggregate analytics. The backend does not yet enforce admin role checks, so all authenticated users can currently access admin endpoints. In production, this would be restricted to users with an admin flag in the User model.
 
+**Timeline Module**
+
+The Timeline module provides a chronological, searchable, and filterable view of all journal entries. The frontend `Timeline.tsx` page fetches all journal entries and presents them in reverse-chronological order with detailed context. It implements real-time search across entry notes and tags, dropdown filters for emotion and outcome (profit/loss/breakeven), and visual indicators for trade outcomes. The outcome icon changes color based on whether the trade was profitable (green up arrow), loss (red down arrow), or breakeven (gray dash). The page uses Framer Motion for smooth animations and displays emotion emojis alongside each entry for quick visual scanning. The Timeline is useful for identifying patterns in trade execution by allowing traders to review the complete history with flexible filtering criteria, such as reviewing all profitable trades during anxious emotional states.
+
+**Insights Module**
+
+The Insights module synthesizes data from multiple sources (journal entries, mood logs, reflections) to provide deeper psychological and performance analysis. The frontend `Insights.tsx` page fetches all three data types in parallel and implements multiple visualization approaches including a bar chart showing emotion-based trade performance (win rate and profit/loss per emotion), a radar chart displaying trader strengths and weaknesses, and a line chart tracking emotional stability over time. The module includes an AI Summary button that calls the backend `/api/ai` endpoint (using Gemini API if configured) to generate intelligent insights from recent trades. A fallback implementation displays chart-based insights when AI is not configured. The page requires at least 3 journal entries before allowing AI summary generation. This module is designed for longer-term analysis and pattern recognition rather than real-time tracking.
+
+**Profile Module**
+
+The Profile module manages user account information and displays aggregated user statistics. The frontend `Profile.tsx` page retrieves current user information from the `AuthContext` and displays user email, display name, and account creation date. The page shows four stat cards: total journal entries, total mood logs, total reflections, and days active (calculated from account creation date). It includes an edit mode allowing users to update their display name and save changes through the `updateProfile` function. The page displays user avatar with initial letters as fallback. Future enhancements could include profile picture uploads, trading preferences, notification settings, or psychological assessment scores. The profile page serves as a personalization and account management center.
+
 All modules follow the same architectural pattern: frontend pages consume data through REST APIs, backend routes validate and process requests, and MongoDB models provide persistence. This consistency makes the codebase easy to extend with new modules following the same conventions.
 
 ---
