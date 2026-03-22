@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { TrendingUp, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -84,13 +84,6 @@ export default function Login() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md border border-border rounded-2xl p-8 bg-card/50"
       >
-        {/* App Icon */}
-        <div className="mb-8 text-center">
-          <div className="w-14 h-14 rounded-xl bg-gradient-gold flex items-center justify-center shadow-gold mx-auto mb-4">
-            <TrendingUp className="w-7 h-7 text-primary-foreground" />
-          </div>
-        </div>
-
         <div className="space-y-2 mb-8">
           <h2 className="text-2xl font-semibold text-foreground font-sans">
             Welcome back

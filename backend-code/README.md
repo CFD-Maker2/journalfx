@@ -1,13 +1,13 @@
-# JournalFX Backend
+# Trader Psychology & Reflection Journal for Forex Backend
 
-Express and MongoDB API for the JournalFX frontend.
+Express and MongoDB API for the Trader Psychology & Reflection Journal for Forex frontend.
 
 ## Environment
 
 Create `backend-code/.env` with:
 
 ```env
-MONGODB_URI=mongodb://localhost:27017/trading-journal
+MONGODB_URI=mongodb://localhost:27017/journalfx-mp
 JWT_SECRET=replace-this-with-a-secure-secret
 PORT=5000
 FRONTEND_URL=http://localhost:8080

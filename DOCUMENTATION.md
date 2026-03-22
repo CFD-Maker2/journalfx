@@ -217,62 +217,80 @@ All output includes proper loading states (spinner) while data is fetching and e
 
 The database for this project uses MongoDB with Mongoose for schema definition and query building. The database is organized around four primary collections: users, journal entries, mood logs, and reflection responses. Each collection is designed to store a specific type of data while maintaining relationships through user IDs.
 
-The User collection stores authentication and profile information with fields:
+#### User Collection
 
-- `_id`: Automatic MongoDB ID
-- `email`: Unique user email address
-- `password`: Hashed password (bcryptjs)
-- `name`: User's display name
-- `created_at`: Account creation timestamp
+| Column Name | Type | Constraints | Description |
+|---|---|---|---|
+| _id | ObjectId | Auto-generated, Primary key | Unique identifier for each user document |
+| email | String | Required, Unique, Lowercase, Trim | User login email address |
+| password | String | Required, Min length: 6 | Hashed password (bcrypt hash before save) |
+| name | String | Optional, Trim | User display name |
+| avatar_url | String | Optional | Profile image URL |
+| role | String | Enum: user, moderator, admin; Default: user | User role for access control |
+| created_at | Date | Auto-generated (timestamps) | Record creation timestamp |
+| updated_at | Date | Auto-generated (timestamps) | Last update timestamp |
 
-The JournalEntry collection stores trade-specific records with fields:
+#### JournalEntry Collection
 
-- `_id`: Entry ID
-- `user_id`: Reference to User document
-- `entry_date`: Timestamp of trade
-- `emotion`: Enumerated emotion field (confident, anxious, calm, stressed, excited, fearful, focused, frustrated, neutral)
-- `emotion_intensity`: Number 1-5
-- `confidence_level`: Number 1-5
-- `pre_trade`: Text notes before trade execution
-- `during_trade`: Text notes while in trade
-- `post_trade`: Text notes after trade close
-- `currency_pair`: Trade symbol (e.g., EURUSD)
-- `trade_type`: Enumerated (long, short, scalp, swing, day)
-- `market_condition`: Enumerated (trending, ranging, volatile, calm)
-- `outcome`: Enumerated (profit, loss, breakeven)
-- `profit_loss`: Numeric P/L amount
-- `stop_loss_pips`: Number of pips for stop
-- `take_profit_pips`: Number of pips for target
-- `tags`: Array of tag strings for categorization
-- `ai_insight`: Optional AI-generated analysis
+| Column Name | Type | Constraints | Description |
+|---|---|---|---|
+| _id | ObjectId | Auto-generated, Primary key | Unique identifier for each journal entry |
+| user_id | ObjectId | Required, Ref: User | Owner of the journal entry |
+| entry_date | Date | Default: Date.now | Trade entry date and time |
+| emotion | String | Enum: confident, anxious, calm, stressed, excited, fearful, focused, frustrated, neutral; Default: neutral | Trade emotion snapshot |
+| emotion_intensity | Number | Min: 1, Max: 5, Default: 3 | Emotion intensity score |
+| confidence_level | Number | Min: 1, Max: 5, Default: 3 | Trader confidence score |
+| pre_trade | String | Optional | Notes before trade execution |
+| during_trade | String | Optional | Notes during active trade |
+| post_trade | String | Optional | Notes after trade closure |
+| currency_pair | String | Optional | Currency pair used in trade |
+| trade_type | String | Enum: long, short, scalp, swing, day, null | Type/style of trade |
+| market_condition | String | Enum: trending, ranging, volatile, calm, null | Market state at entry time |
+| outcome | String | Enum: profit, loss, breakeven, null | Final trade outcome |
+| profit_loss | Number | Optional | Profit/loss numeric value |
+| stop_loss_pips | Number | Optional | Stop loss value in pips |
+| take_profit_pips | Number | Optional | Take profit value in pips |
+| ai_insight | String | Optional | AI-generated insight text |
+| sentiment | String | Optional | Sentiment label |
+| sentiment_score | Number | Optional | Sentiment score value |
+| reflection_prompt | String | Optional | Reflection prompt text linked to entry |
+| tags | Array<String> | Optional | Tags for custom categorization |
+| created_at | Date | Auto-generated (timestamps) | Record creation timestamp |
+| updated_at | Date | Auto-generated (timestamps) | Last update timestamp |
 
-The MoodLog collection stores daily emotion check-ins with fields:
+#### MoodLog Collection
 
-- `_id`: Log ID
-- `user_id`: Reference to User document
-- `log_date`: Timestamp of check-in
-- `emotion`: Enumerated emotion (same values as JournalEntry)
-- `intensity`: Number 1-5
-- `notes`: Optional text describing the mood
-- `created_at` and `updated_at`: Automatic timestamps
+| Column Name | Type | Constraints | Description |
+|---|---|---|---|
+| _id | ObjectId | Auto-generated, Primary key | Unique identifier for each mood log |
+| user_id | ObjectId | Required, Ref: User | Owner of the mood log |
+| log_date | Date | Default: Date.now | Mood check-in date and time |
+| emotion | String | Required, Enum: confident, anxious, calm, stressed, excited, fearful, focused, frustrated, neutral | Day-level emotion value |
+| intensity | Number | Min: 1, Max: 5, Default: 3 | Mood intensity score |
+| notes | String | Optional | Free-text mood notes |
+| created_at | Date | Auto-generated (timestamps) | Record creation timestamp |
+| updated_at | Date | Auto-generated (timestamps) | Last update timestamp |
 
-The ReflectionResponse collection stores daily reflection answers with fields:
+#### ReflectionResponse Collection
 
-- `_id`: Response ID
-- `user_id`: Reference to User document
-- `prompt_id`: String identifier for the prompt (e.g., "mindset", "best_execution")
-- `prompt_text`: The full text of the question
-- `response`: The user's written answer
-- `category`: Classification of the prompt (for future analysis)
-- `created_at` and `updated_at`: Automatic timestamps
+| Column Name | Type | Constraints | Description |
+|---|---|---|---|
+| _id | ObjectId | Auto-generated, Primary key | Unique identifier for each reflection response |
+| user_id | ObjectId | Required, Ref: User | Owner of the reflection response |
+| prompt_id | String | Required | Prompt identifier key |
+| prompt_text | String | Required | Full reflection question text |
+| response | String | Required | User-written response text |
+| category | String | Required | Reflection category label |
+| created_at | Date | Auto-generated (timestamps) | Record creation timestamp |
+| updated_at | Date | Auto-generated (timestamps) | Last update timestamp |
 
-Indexes are defined on frequently queried fields to improve performance:
+#### Indexes and Data Isolation
 
-- `{ user_id: 1, entry_date: -1 }` on JournalEntry for fast retrieval of user's entries sorted by date
-- `{ user_id: 1, log_date: -1 }` on MoodLog for efficient mood history queries
-- `{ user_id: 1, created_at: -1 }` on ReflectionResponse for sorting reflections chronologically
+- JournalEntry index: { user_id: 1, entry_date: -1 }
+- MoodLog index: { user_id: 1, log_date: -1 }
+- ReflectionResponse index: { user_id: 1, created_at: -1 }
 
-All queries in the backend filter by `user_id` to ensure users only see their own data, providing natural data isolation at the database level.
+All backend queries filter by user_id to ensure each user can access only their own data.
 
 ### 3.5 System Development
 

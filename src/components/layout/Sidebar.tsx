@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -12,8 +12,6 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  TrendingUp,
-  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -47,25 +45,6 @@ export function Sidebar() {
       animate={{ width: collapsed ? 80 : 260 }}
       className="fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border z-50 flex flex-col"
     >
-      {/* Logo */}
-      <div className="p-4 border-b border-sidebar-border">
-        <Link to="/dashboard" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-gold flex items-center justify-center shadow-gold">
-            <TrendingUp className="w-5 h-5 text-primary-foreground" />
-          </div>
-          {!collapsed && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <h1 className="text-lg font-semibold text-foreground">
-              </h1>
-            </motion.div>
-          )}
-        </Link>
-      </div>
-
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {menuItems.map((item) => {
