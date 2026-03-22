@@ -23,9 +23,6 @@ type TradeOutcome = Database['public']['Enums']['trade_outcome'];
 const tradeTypes: { value: TradeType; label: string }[] = [
   { value: 'long', label: 'Long Position' },
   { value: 'short', label: 'Short Position' },
-  { value: 'scalp', label: 'Scalping' },
-  { value: 'swing', label: 'Swing Trade' },
-  { value: 'day', label: 'Day Trade' },
 ];
 
 const marketConditions: { value: MarketCondition; label: string }[] = [

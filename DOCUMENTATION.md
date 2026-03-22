@@ -183,7 +183,8 @@ Daily Reflections form presents five guided prompts:
 
 - Each prompt is read-only text describing the reflection question
 - Each prompt has an associated text area for the user's response
-- All five prompts must be answered before the form can be submitted
+- Responses are saved per prompt (one prompt at a time) using an individual "Answer" and "Save" flow
+- Same-day completion is tracked by checking which prompt IDs already have responses for the current day
 - Form validation checks that all responses are non-empty
 
 Input from the frontend is sent as JSON through the API with an Authorization header containing the JWT token. The backend validates all inputs using express-validator middleware before processing. Invalid inputs return a 400 error with detailed validation messages. This two-layer validation (client and server) improves user experience while maintaining security.
@@ -316,7 +317,7 @@ The Mood Log module captures day-level emotional check-ins. The frontend `MoodLo
 
 **Reflections Module**
 
-The Reflections module is implemented as a guided question interface with daily reset behavior. The frontend `Reflections.tsx` page retrieves the user's existing responses and displays five hardcoded prompts. Using date filtering with date-fns `startOfDay` and `endOfDay`, the page determines which prompts have been answered today. Unanswered prompts display empty text areas. The form requires all five answers before submission. On submit, POST to `/api/reflection` with the responses. The backend saves each ReflectionResponse document with the prompt ID, text, and user's answer. The GET `/api/reflection` endpoint retrieves responses for the authenticated user. The daily reset is enforced on the frontend through date comparison, not database logic, allowing the same prompts to be re-answered on the next day.
+The Reflections module is implemented as a guided question interface with daily reset behavior. The frontend `Reflections.tsx` page retrieves the user's existing responses and displays five hardcoded prompts. Using date filtering with date-fns `startOfDay` and `endOfDay`, the page determines which prompts have been answered today. Unanswered prompts display empty text areas and each prompt can be answered independently. When the user clicks Save for a prompt, the app sends a POST request to `/api/reflection` for that specific prompt response. The backend saves each ReflectionResponse document with the prompt ID, text, and user's answer. The GET `/api/reflection` endpoint retrieves responses for the authenticated user, and same-day completion is derived by matching today's saved prompt IDs. The daily reset is enforced on the frontend through date comparison, not database logic, allowing the same prompts to be re-answered on the next day.
 
 **Dashboard Module**
 
